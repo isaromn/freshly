@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ErrorOutline
@@ -83,7 +85,10 @@ private fun RecipeContent(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
     ) { innerPadding ->
-        LazyColumn(
+        // One column on phones; as many 340 dp columns as fit on a computer window, so the
+        // photos keep a good shape instead of turning into thin strips.
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 340.dp),
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = 16.dp,
@@ -91,9 +96,10 @@ private fun RecipeContent(
                 top = innerPadding.calculateTopPadding() + 16.dp,
                 bottom = innerPadding.calculateBottomPadding() + 16.dp,
             ),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item(key = "header") {
+            item(key = "header", span = { GridItemSpan(maxLineSpan) }) {
                 RecipeHeader(
                     canRefresh = state.status != RecipeStatus.LOADING,
                     onRefresh = { onIntent(RecipeIntent.Refresh) },
@@ -101,7 +107,7 @@ private fun RecipeContent(
             }
 
             if (state.usedIngredients.isNotEmpty()) {
-                item(key = "ingredients") {
+                item(key = "ingredients", span = { GridItemSpan(maxLineSpan) }) {
                     Text(
                         text = strings.usingIngredients(state.usedIngredients.joinToString(", ")),
                         style = MaterialTheme.typography.bodyMedium,
@@ -111,7 +117,7 @@ private fun RecipeContent(
             }
 
             when (state.status) {
-                RecipeStatus.LOADING -> item(key = "loading") {
+                RecipeStatus.LOADING -> item(key = "loading", span = { GridItemSpan(maxLineSpan) }) {
                     CenteredMessage {
                         CircularProgressIndicator()
                         Text(
@@ -122,7 +128,7 @@ private fun RecipeContent(
                     }
                 }
 
-                RecipeStatus.EMPTY_PANTRY -> item(key = "empty") {
+                RecipeStatus.EMPTY_PANTRY -> item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
                     CenteredMessage {
                         Icon(
                             imageVector = Icons.Filled.Restaurant,
@@ -144,7 +150,7 @@ private fun RecipeContent(
                     }
                 }
 
-                RecipeStatus.ERROR -> item(key = "error") {
+                RecipeStatus.ERROR -> item(key = "error", span = { GridItemSpan(maxLineSpan) }) {
                     CenteredMessage {
                         Icon(
                             imageVector = Icons.Filled.ErrorOutline,
@@ -228,7 +234,7 @@ private fun RecipeCard(
             recipe = recipe,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(140.dp),
+                .aspectRatio(RECIPE_IMAGE_ASPECT_RATIO),
         )
         Column(
             modifier = Modifier.padding(16.dp),

@@ -3,10 +3,12 @@ package com.ecoalacena.app.presentation.recipes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
@@ -78,59 +81,103 @@ internal fun RecipeDetail(
             )
         },
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = innerPadding.calculateTopPadding(),
-                bottom = innerPadding.calculateBottomPadding() + 24.dp,
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            item(key = "image") {
-                RecipeHeaderImage(
-                    recipe = recipe,
+        // Phones: one scrolling column. Wide windows: the dish on the left and the steps on the
+        // right, so the photo keeps its shape and the checklist stays in view while cooking.
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            if (maxWidth >= TWO_PANE_MIN_WIDTH) {
+                Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clip(MaterialTheme.shapes.large),
-                )
-            }
-
-            item(key = "title") {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        text = recipe.title,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    RecipeMeta(recipe)
-                }
-            }
-
-            item(key = "ingredients") {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    DetailSectionTitle(strings.ingredientsTitle)
-                    recipe.ingredients.forEach { ingredient ->
-                        Text(text = "• $ingredient", style = MaterialTheme.typography.bodyLarge)
+                        .fillMaxSize()
+                        .padding(top = innerPadding.calculateTopPadding()),
+                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+                ) {
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(start = 24.dp, bottom = 24.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        recipeOverview(recipe)
+                    }
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(end = 24.dp, bottom = 24.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        recipeSteps(recipe, completedSteps, onToggleStep)
                     }
                 }
-            }
-
-            item(key = "progress") {
-                StepsProgress(done = completedSteps.size, total = recipe.steps.size)
-            }
-
-            itemsIndexed(recipe.steps, key = { index, _ -> "step-$index" }) { index, step ->
-                StepItem(
-                    number = index + 1,
-                    text = step,
-                    done = index in completedSteps,
-                    onToggle = { onToggleStep(index) },
-                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = innerPadding.calculateTopPadding(),
+                        bottom = innerPadding.calculateBottomPadding() + 24.dp,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    recipeOverview(recipe)
+                    recipeSteps(recipe, completedSteps, onToggleStep)
+                }
             }
         }
+    }
+}
+
+/** Windows at least this wide show the recipe in two columns. */
+private val TWO_PANE_MIN_WIDTH = 700.dp
+
+/** Picture, title, time, difficulty and ingredients of the recipe. */
+private fun LazyListScope.recipeOverview(recipe: Recipe) {
+    item(key = "image") {
+        RecipeHeaderImage(
+            recipe = recipe,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(RECIPE_IMAGE_ASPECT_RATIO)
+                .clip(MaterialTheme.shapes.large),
+        )
+    }
+
+    item(key = "title") {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = recipe.title,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+            )
+            RecipeMeta(recipe)
+        }
+    }
+
+    item(key = "ingredients") {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            DetailSectionTitle(LocalAppStrings.current.ingredientsTitle)
+            recipe.ingredients.forEach { ingredient ->
+                Text(text = "• $ingredient", style = MaterialTheme.typography.bodyLarge)
+            }
+        }
+    }
+}
+
+/** Overall progress and the checklist of steps. */
+private fun LazyListScope.recipeSteps(
+    recipe: Recipe,
+    completedSteps: Set<Int>,
+    onToggleStep: (Int) -> Unit,
+) {
+    item(key = "progress") {
+        StepsProgress(done = completedSteps.size, total = recipe.steps.size)
+    }
+
+    itemsIndexed(recipe.steps, key = { index, _ -> "step-$index" }) { index, step ->
+        StepItem(
+            number = index + 1,
+            text = step,
+            done = index in completedSteps,
+            onToggle = { onToggleStep(index) },
+        )
     }
 }
 

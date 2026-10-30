@@ -35,6 +35,9 @@ import ecoalacenakmp.shared.generated.resources.recipe_soup
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 
+/** Width / height of recipe pictures; the local illustrations are drawn at this shape (320 × 160). */
+internal const val RECIPE_IMAGE_ASPECT_RATIO = 2f
+
 /** Local illustration of each kind of dish, used offline and whenever a recipe has no photo. */
 fun getOfflineRecipeImage(category: RecipeCategory): DrawableResource =
     when (category) {
