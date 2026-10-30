@@ -1,0 +1,52 @@
+# ---- Secretos y configuración local ----
+# local.properties contiene sdk.dir y GEMINI_API_KEY: nunca debe subirse.
+local.properties
+*.keystore
+*.jks
+.env
+.env.*
+
+# ---- Gradle / Kotlin ----
+.gradle/
+build/
+.kotlin/
+captures/
+*.hprof
+.externalNativeBuild/
+.cxx/
+
+# ---- IDEs (Android Studio / IntelliJ / Fleet / VS Code) ----
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+.fleet/
+.vscode/
+
+# ---- Xcode / iOS ----
+xcuserdata/
+DerivedData/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+iosApp/Pods/
+iosApp/build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ---- Android ----
+*.apk
+*.aab
+*.ap_
+*.dex
+google-services.json
+release/
+
+# ---- Sistema operativo ----
+.DS_Store
+Thumbs.db
+
+# ---- Logs ----
+*.log

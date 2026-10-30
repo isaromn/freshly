@@ -1,0 +1,56 @@
+-- Offline-first pantry storage. This table is the single source of truth (SSOT).
+-- category stores the name of the Category enum (e.g. 'DAIRY').
+-- expirationDate is an epoch timestamp in milliseconds (NULL = does not expire).
+-- isOrganic is stored as 0/1 and converted to Boolean in the repository.
+CREATE TABLE pantryItemEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'OTHER',
+    quantity REAL NOT NULL,
+    unit TEXT NOT NULL,
+    expirationDate INTEGER,
+    isOrganic INTEGER NOT NULL DEFAULT 0
+);
+
+-- One row per product consumed before it expired; summed for the "waste avoided" metric.
+CREATE TABLE savedFoodEntity (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    kg REAL NOT NULL,
+    savedAt INTEGER NOT NULL
+);
+
+selectAll:
+SELECT *
+FROM pantryItemEntity
+ORDER BY name COLLATE NOCASE ASC;
+
+selectById:
+SELECT *
+FROM pantryItemEntity
+WHERE id = ?;
+
+insertItem:
+INSERT OR REPLACE INTO pantryItemEntity(id, name, category, quantity, unit, expirationDate, isOrganic)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+deleteById:
+DELETE FROM pantryItemEntity
+WHERE id = ?;
+
+-- Items that expire on or before :threshold (this includes items already expired).
+-- Rows with a NULL expirationDate never match the comparison, so they are excluded.
+-- Do not add `IS NOT NULL` here: it makes SQLDelight generate a separate result class
+-- instead of reusing PantryItemEntity.
+selectExpiringSoon:
+SELECT *
+FROM pantryItemEntity
+WHERE expirationDate <= :threshold
+ORDER BY expirationDate ASC;
+
+insertSavedFood:
+INSERT INTO savedFoodEntity(kg, savedAt)
+VALUES (?, ?);
+
+selectTotalSavedKg:
+SELECT COALESCE(SUM(kg), 0.0)
+FROM savedFoodEntity;
