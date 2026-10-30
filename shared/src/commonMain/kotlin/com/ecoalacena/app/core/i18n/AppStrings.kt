@@ -132,6 +132,7 @@ interface AppStrings {
     val geminiModelUnavailable: String
     val geminiRateLimit: String
     val geminiImageTooLarge: String
+    val geminiNoConnection: String
 
     // ---- Recipes ----
     val recipesSubtitle: String

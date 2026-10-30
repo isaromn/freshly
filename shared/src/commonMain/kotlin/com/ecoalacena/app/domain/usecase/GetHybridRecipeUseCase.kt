@@ -104,7 +104,7 @@ class GetHybridRecipeUseCase(
 
         val aiFailure = when {
             aiRecipe != null -> null
-            else -> aiResult.exceptionOrNull() ?: GeminiException("Gemini returned an incomplete recipe.")
+            else -> aiResult.exceptionOrNull() ?: GeminiException.InvalidResponse("Gemini returned an incomplete recipe.")
         }
 
         val localLimit = if (aiRecipe != null) LOCAL_RECIPES_WITH_AI else LOCAL_RECIPES_WITHOUT_AI

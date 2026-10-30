@@ -62,7 +62,7 @@ class GeminiRecipeService(
         outputLanguage: AppLanguage,
     ): GeminiRecipeResult {
         if (ingredientLines.isEmpty()) {
-            throw GeminiException("There are no ingredients to cook with.")
+            throw GeminiException.InvalidRequest("There are no ingredients to cook with.")
         }
 
         val request = GeminiRequest(
@@ -86,11 +86,7 @@ class GeminiRecipeService(
 
         val text = httpClient.requestGeminiText(config, request)
 
-        return try {
-            geminiJson.decodeFromString<GeminiRecipeResult>(text.stripJsonCodeFences())
-        } catch (error: Exception) {
-            throw GeminiException("Could not parse Gemini response: ${error.message}")
-        }
+        return decodeGeminiJson<GeminiRecipeResult>(text)
     }
 
     private fun buildUserPrompt(ingredientLines: List<String>, outputLanguage: AppLanguage): String =

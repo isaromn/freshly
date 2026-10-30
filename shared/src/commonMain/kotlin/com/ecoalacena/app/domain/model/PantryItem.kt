@@ -11,6 +11,13 @@ enum class Category {
 
     companion object {
 
+        /** The short codes the vision AI answers with. */
+        private val AI_CODES = mapOf(
+            "FRUIT_VEG" to FRUITS_VEGETABLES,
+            "MEAT" to MEAT_FISH,
+            "BEVERAGE" to BEVERAGES,
+        )
+
         private val FRUITS_VEGETABLES_WORDS = listOf("FRUIT", "VEGETABLE", "PRODUCE", "FRUTA", "VERDURA")
         private val DAIRY_WORDS = listOf("DAIRY", "MILK", "CHEESE", "YOGURT", "EGG", "LACTEO", "HUEVO")
         private val MEAT_FISH_WORDS = listOf("MEAT", "FISH", "SEAFOOD", "POULTRY", "CARNE", "PESCADO", "POLLO")
@@ -33,6 +40,7 @@ enum class Category {
                 .orEmpty()
 
             Category.entries.firstOrNull { it.name == key }?.let { return it }
+            AI_CODES[key]?.let { return it }
 
             return when {
                 FRUITS_VEGETABLES_WORDS.any { it in key } -> FRUITS_VEGETABLES

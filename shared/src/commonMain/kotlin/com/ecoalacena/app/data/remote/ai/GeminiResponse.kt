@@ -11,12 +11,14 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class GeminiAnalysisResult(
     val name: String,
-    /** One of the `Category` enum names (e.g. `DAIRY`); mapped with `Category.fromRaw`. */
+    /** A category code (`FRUIT_VEG`, `DAIRY`, `MEAT`…); mapped with `Category.fromRaw`. */
     val category: String = "OTHER",
     val quantity: Double = 1.0,
     val unit: String = "unit",
     /** Days from today until the product is expected to expire, or `null` if unknown. */
     val estimatedDaysUntilExpiration: Int? = null,
+    /** How sure the model is of this item, from 0 to 1. */
+    val confidence: Double = 1.0,
     val isOrganic: Boolean = false,
 )
 

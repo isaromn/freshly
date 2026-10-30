@@ -28,22 +28,25 @@ internal object DemoReceipt {
                   "quantity": 2,
                   "unit": "l",
                   "estimatedDaysUntilExpiration": 6,
+                  "confidence": 1.0,
                   "isOrganic": false
                 },
                 {
                   "name": "$apples",
-                  "category": "FRUITS_VEGETABLES",
+                  "category": "FRUIT_VEG",
                   "quantity": 1.5,
                   "unit": "kg",
                   "estimatedDaysUntilExpiration": 12,
+                  "confidence": 1.0,
                   "isOrganic": true
                 },
                 {
                   "name": "$chicken",
-                  "category": "MEAT_FISH",
+                  "category": "MEAT",
                   "quantity": 1.2,
                   "unit": "kg",
                   "estimatedDaysUntilExpiration": 2,
+                  "confidence": 1.0,
                   "isOrganic": false
                 },
                 {
@@ -52,6 +55,7 @@ internal object DemoReceipt {
                   "quantity": 500,
                   "unit": "g",
                   "estimatedDaysUntilExpiration": 3,
+                  "confidence": 1.0,
                   "isOrganic": false
                 },
                 {
@@ -60,6 +64,7 @@ internal object DemoReceipt {
                   "quantity": 500,
                   "unit": "g",
                   "estimatedDaysUntilExpiration": 14,
+                  "confidence": 1.0,
                   "isOrganic": false
                 }
               ]

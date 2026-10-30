@@ -188,6 +188,7 @@ object EnglishStrings : AppStrings {
         "The configured Gemini model is no longer available. Change the model in GeminiConfig."
     override val geminiRateLimit = "The Gemini usage limit was reached. Try again in a few minutes."
     override val geminiImageTooLarge = "The image is too large. Try a smaller photo."
+    override val geminiNoConnection = "No internet connection. Check your network and try again."
 
     // ---- Recipes ----
     override val recipesSubtitle = "Cook what expires first"

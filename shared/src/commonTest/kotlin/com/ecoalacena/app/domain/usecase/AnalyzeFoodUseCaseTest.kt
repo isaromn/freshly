@@ -13,6 +13,7 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
 import kotlin.test.Test
@@ -20,6 +21,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 class AnalyzeFoodUseCaseTest {
 
@@ -154,7 +158,42 @@ class AnalyzeFoodUseCaseTest {
     }
 
     @Test
-    fun failsWithGeminiExceptionOnHttpError() = runTest {
+    fun mapsTheShortCategoryCodesOfTheVisionPrompt() = runTest {
+        val useCase = useCaseReturning(
+            geminiBody(
+                """{"items":[""" +
+                    """{"name":"Manzana roja","category":"FRUIT_VEG","quantity":4,"unit":"unit","estimatedDaysUntilExpiration":7,"confidence":0.95},""" +
+                    """{"name":"Pechuga de pollo","category":"MEAT","quantity":1,"unit":"kg","estimatedDaysUntilExpiration":3,"confidence":0.9},""" +
+                    """{"name":"Jugo de naranja","category":"BEVERAGE","quantity":1,"unit":"l","estimatedDaysUntilExpiration":10,"confidence":0.9}]}""",
+            ),
+        )
+
+        val items = useCase(imageBytes).getOrThrow()
+
+        assertEquals(
+            listOf(Category.FRUITS_VEGETABLES, Category.MEAT_FISH, Category.BEVERAGES),
+            items.map { it.category },
+        )
+        assertEquals(4.0, items.first().quantity)
+    }
+
+    @Test
+    fun leavesOutItemsTheModelIsNotSureAbout() = runTest {
+        val useCase = useCaseReturning(
+            geminiBody(
+                """{"items":[""" +
+                    """{"name":"Banano","category":"FRUIT_VEG","quantity":3,"unit":"unit","estimatedDaysUntilExpiration":2,"confidence":0.9},""" +
+                    """{"name":"Algo borroso","category":"OTHER","quantity":1,"unit":"unit","estimatedDaysUntilExpiration":5,"confidence":0.1}]}""",
+            ),
+        )
+
+        val items = useCase(imageBytes).getOrThrow()
+
+        assertEquals(listOf("Banano"), items.map { it.name })
+    }
+
+    @Test
+    fun failsWithAnApiErrorOnHttpError() = runTest {
         val useCase = useCaseReturning(
             body = """{"error":{"message":"quota"}}""",
             status = HttpStatusCode.TooManyRequests,
@@ -162,18 +201,66 @@ class AnalyzeFoodUseCaseTest {
 
         val error = useCase(imageBytes).exceptionOrNull()
 
-        assertIs<GeminiException>(error)
-        assertTrue("429" in error.message.orEmpty())
+        assertIs<GeminiException.Api>(error)
+        assertEquals(429, error.statusCode)
     }
 
     @Test
-    fun failsWhenApiKeyIsBlank() = runTest {
-        val useCase = useCaseReturning(geminiBody("""{"items":[]}"""), apiKey = "")
+    fun failsWithMissingApiKeyWithoutCallingGemini() = runTest {
+        val useCase = useCaseReturning(
+            geminiBody("""{"items":[]}"""),
+            apiKey = "",
+            onRequest = { error("Gemini must not be called without an API key") },
+        )
 
-        val error = useCase(imageBytes).exceptionOrNull()
+        assertIs<GeminiException.MissingApiKey>(useCase(imageBytes).exceptionOrNull())
+    }
 
-        assertIs<GeminiException>(error)
-        assertTrue("API key" in error.message.orEmpty())
+    @Test
+    fun failsWithANetworkErrorWhenGeminiCannotBeReached() = runTest {
+        val useCase = useCaseReturning(
+            geminiBody("""{"items":[]}"""),
+            onRequest = { throw IllegalStateException("Unable to resolve host") },
+        )
+
+        assertIs<GeminiException.Network>(useCase(imageBytes).exceptionOrNull())
+    }
+
+    @Test
+    fun failsWithAnInvalidResponseWhenTheJsonDoesNotMatchTheSchema() = runTest {
+        val useCase = useCaseReturning(geminiBody("""Sorry, I can't see any food"""))
+
+        assertIs<GeminiException.InvalidResponse>(useCase(imageBytes).exceptionOrNull())
+    }
+
+    @Test
+    fun requestsStructuredOutputWithTheAllowedCodes() = runTest {
+        var requestBody = ""
+        val useCase = useCaseReturning(
+            geminiBody("""{"items":[]}"""),
+            onRequest = { requestBody = it },
+        )
+
+        useCase(imageBytes)
+
+        val schema = geminiJson.parseToJsonElement(requestBody)
+            .jsonObject.getValue("generationConfig")
+            .jsonObject
+        assertEquals("application/json", schema.getValue("responseMimeType").jsonPrimitive.content)
+        val item = schema.getValue("responseSchema").jsonObject
+            .getValue("properties").jsonObject
+            .getValue("items").jsonObject
+            .getValue("items").jsonObject
+        val properties = item.getValue("properties").jsonObject
+        assertEquals(
+            listOf("FRUIT_VEG", "DAIRY", "MEAT", "BAKERY", "PANTRY_STAPLE", "BEVERAGE", "OTHER"),
+            properties.getValue("category").jsonObject.getValue("enum").jsonArray.map { it.jsonPrimitive.content },
+        )
+        assertEquals(
+            listOf("kg", "g", "l", "ml", "unit", "pack"),
+            properties.getValue("unit").jsonObject.getValue("enum").jsonArray.map { it.jsonPrimitive.content },
+        )
+        assertTrue("confidence" in item.getValue("required").jsonArray.map { it.jsonPrimitive.content })
     }
 
     private fun useCaseReturning(
@@ -181,8 +268,10 @@ class AnalyzeFoodUseCaseTest {
         status: HttpStatusCode = HttpStatusCode.OK,
         apiKey: String = "test-key",
         language: AppLanguage = AppLanguage.ES,
+        onRequest: (String) -> Unit = {},
     ): AnalyzeFoodUseCase {
-        val engine = MockEngine {
+        val engine = MockEngine { request ->
+            onRequest((request.body as TextContent).text)
             respond(
                 content = body,
                 status = status,

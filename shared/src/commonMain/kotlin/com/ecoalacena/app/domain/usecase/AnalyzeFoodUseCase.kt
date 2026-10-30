@@ -20,6 +20,9 @@ import kotlin.uuid.Uuid
  * Analyses a photo (a product or a supermarket receipt, in Spanish or English) with Gemini and
  * turns the answer into [PantryItem]s pre-filled with a category and an expiration date.
  *
+ * Items the model is not sure about (confidence below [MIN_CONFIDENCE]) are left out, so a blurry
+ * shape or an unreadable receipt line does not turn into a made-up product.
+ *
  * Nothing the model leaves out stays empty:
  * - if the category is missing or unknown, it is guessed from the product name in either language;
  * - if there is no expiration estimate, [estimateExpiration] provides one.
@@ -66,7 +69,7 @@ class AnalyzeFoodUseCase(
 
     private fun List<GeminiAnalysisResult>.toPantryItems(): List<PantryItem> {
         val now = nowMillis()
-        return mapNotNull { result -> result.toPantryItem(now) }
+        return filter { it.confidence >= MIN_CONFIDENCE }.mapNotNull { result -> result.toPantryItem(now) }
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -139,27 +142,30 @@ class AnalyzeFoodUseCase(
         }
     }
 
-    private companion object {
-        const val MAX_SHELF_LIFE_DAYS = 3650
-        const val DEFAULT_UNIT = "unit"
+    companion object {
+        /** Items below this confidence (0 to 1) are treated as guesses and not suggested. */
+        const val MIN_CONFIDENCE = 0.3
 
-        const val KG_PER_POUND = 0.45359237
-        const val GRAMS_PER_OUNCE = 28.349523
-        const val LITERS_PER_GALLON = 3.785412
-        const val ML_PER_FLUID_OUNCE = 29.5735
+        private const val MAX_SHELF_LIFE_DAYS = 3650
+        private const val DEFAULT_UNIT = "unit"
 
-        val WHITESPACE = Regex("\\s+")
+        private const val KG_PER_POUND = 0.45359237
+        private const val GRAMS_PER_OUNCE = 28.349523
+        private const val LITERS_PER_GALLON = 3.785412
+        private const val ML_PER_FLUID_OUNCE = 29.5735
 
-        val KILOGRAM_UNITS = setOf("kg", "kgs", "kilo", "kilos", "kilogram", "kilograms", "kilogramo", "kilogramos")
-        val GRAM_UNITS = setOf("g", "gr", "grs", "gram", "grams", "gramo", "gramos")
-        val LITER_UNITS = setOf("l", "lt", "lts", "liter", "liters", "litre", "litres", "litro", "litros")
-        val MILLILITER_UNITS = setOf("ml", "cc", "milliliter", "milliliters", "mililitro", "mililitros")
-        val POUND_UNITS = setOf("lb", "lbs", "pound", "pounds", "libra", "libras")
-        val OUNCE_UNITS = setOf("oz", "ounce", "ounces", "onza", "onzas")
-        val GALLON_UNITS = setOf("gal", "gallon", "gallons", "galon", "galones")
-        val FLUID_OUNCE_UNITS = setOf("fl oz", "floz", "fluid ounce", "fluid ounces")
-        val DOZEN_UNITS = setOf("dozen", "doz", "dz", "docena", "docenas")
-        val PACK_UNITS = setOf(
+        private val WHITESPACE = Regex("\\s+")
+
+        private val KILOGRAM_UNITS = setOf("kg", "kgs", "kilo", "kilos", "kilogram", "kilograms", "kilogramo", "kilogramos")
+        private val GRAM_UNITS = setOf("g", "gr", "grs", "gram", "grams", "gramo", "gramos")
+        private val LITER_UNITS = setOf("l", "lt", "lts", "liter", "liters", "litre", "litres", "litro", "litros")
+        private val MILLILITER_UNITS = setOf("ml", "cc", "milliliter", "milliliters", "mililitro", "mililitros")
+        private val POUND_UNITS = setOf("lb", "lbs", "pound", "pounds", "libra", "libras")
+        private val OUNCE_UNITS = setOf("oz", "ounce", "ounces", "onza", "onzas")
+        private val GALLON_UNITS = setOf("gal", "gallon", "gallons", "galon", "galones")
+        private val FLUID_OUNCE_UNITS = setOf("fl oz", "floz", "fluid ounce", "fluid ounces")
+        private val DOZEN_UNITS = setOf("dozen", "doz", "dz", "docena", "docenas")
+        private val PACK_UNITS = setOf(
             "pack", "packs", "pk", "pkg", "package", "packages", "paquete", "paquetes",
             "bag", "bags", "bolsa", "bolsas", "box", "boxes", "caja", "cajas",
             "carton", "cartons", "tray", "trays", "bandeja", "bandejas",
