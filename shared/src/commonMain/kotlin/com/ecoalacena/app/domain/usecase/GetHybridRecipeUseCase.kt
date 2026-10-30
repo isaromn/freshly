@@ -92,7 +92,8 @@ class GetHybridRecipeUseCase(
             ingredientLines = ingredients.map { it.toPromptLine(now) },
             outputLanguage = outputLanguage,
         )
-        val aiRecipe = aiResult.getOrNull()?.toRecipeOrNull()
+        // The AI recipe is built around the most urgent item, so it takes that item's category.
+        val aiRecipe = aiResult.getOrNull()?.toRecipeOrNull()?.copy(category = ingredients.first().category)
 
         val aiFailure = when {
             aiRecipe != null -> null

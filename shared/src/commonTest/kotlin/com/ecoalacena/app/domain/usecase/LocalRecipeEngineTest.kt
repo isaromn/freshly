@@ -1,11 +1,13 @@
 package com.ecoalacena.app.domain.usecase
 
 import com.ecoalacena.app.core.i18n.AppLanguage
+import com.ecoalacena.app.domain.model.Category
 import com.ecoalacena.app.domain.model.RecipeSource
 import com.ecoalacena.app.domain.recipe.LocalRecipeEngine
 import com.ecoalacena.app.testing.testItem
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class LocalRecipeEngineTest {
@@ -33,6 +35,21 @@ class LocalRecipeEngineTest {
         assertTrue("Zanahoria (2 kg)" in soup.ingredients)
         assertTrue("Cebolla (1 kg)" in soup.ingredients)
         assertTrue(soup.steps.isNotEmpty())
+    }
+
+    @Test
+    fun recipeTakesTheCategoryOfItsMainIngredientAndHasNoPhoto() {
+        val recipes = engine.suggest(
+            listOf(
+                testItem("1", "Zanahoria", category = Category.FRUITS_VEGETABLES),
+                testItem("2", "Cebolla", category = Category.FRUITS_VEGETABLES),
+            ),
+        )
+
+        val soup = recipes.first { it.title == "Sopa casera de verduras" }
+
+        assertEquals(Category.FRUITS_VEGETABLES, soup.category)
+        assertNull(soup.imageUrl)
     }
 
     @Test

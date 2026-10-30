@@ -41,7 +41,9 @@ class RecipeViewModel(
         when (intent) {
             RecipeIntent.ScreenShown -> reloadIfPantryChanged()
             RecipeIntent.Refresh -> load()
-            is RecipeIntent.ToggleRecipe -> toggleRecipe(intent.recipeId)
+            is RecipeIntent.OpenRecipe -> openRecipe(intent.recipeId)
+            RecipeIntent.CloseRecipe -> _state.update { it.copy(selectedRecipeId = null) }
+            is RecipeIntent.ToggleStep -> toggleStep(intent.recipeId, intent.stepIndex)
         }
     }
 
@@ -87,7 +89,6 @@ class RecipeViewModel(
                             )
                             "$reason ${texts.recipeLocalSuffix}"
                         },
-                        expandedRecipeId = result.recipes.firstOrNull()?.id,
                     )
                 },
                 onFailure = { error ->
@@ -106,11 +107,20 @@ class RecipeViewModel(
         }
     }
 
-    private fun toggleRecipe(recipeId: String) {
+    private fun openRecipe(recipeId: String) {
         _state.update { current ->
-            current.copy(
-                expandedRecipeId = if (current.expandedRecipeId == recipeId) null else recipeId,
-            )
+            if (current.recipes.none { it.id == recipeId }) current else current.copy(selectedRecipeId = recipeId)
+        }
+    }
+
+    private fun toggleStep(recipeId: String, stepIndex: Int) {
+        _state.update { current ->
+            val recipe = current.recipes.firstOrNull { it.id == recipeId } ?: return@update current
+            if (stepIndex !in recipe.steps.indices) return@update current
+
+            val done = current.completedStepsOf(recipeId)
+            val updated = if (stepIndex in done) done - stepIndex else done + stepIndex
+            current.copy(completedSteps = current.completedSteps + (recipeId to updated))
         }
     }
 }

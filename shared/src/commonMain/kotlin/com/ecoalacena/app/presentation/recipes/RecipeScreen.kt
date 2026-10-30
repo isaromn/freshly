@@ -1,26 +1,21 @@
 package com.ecoalacena.app.presentation.recipes
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ecoalacena.app.domain.model.Recipe
 import com.ecoalacena.app.presentation.i18n.LocalAppStrings
+import com.ecoalacena.app.presentation.platform.PlatformBackHandler
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -68,6 +64,20 @@ private fun RecipeContent(
     modifier: Modifier = Modifier,
 ) {
     val strings = LocalAppStrings.current
+
+    val selectedRecipe = state.selectedRecipe
+    if (selectedRecipe != null) {
+        // System back closes the recipe before it leaves the tab.
+        PlatformBackHandler { onIntent(RecipeIntent.CloseRecipe) }
+        RecipeDetail(
+            recipe = selectedRecipe,
+            completedSteps = state.completedStepsOf(selectedRecipe.id),
+            onToggleStep = { index -> onIntent(RecipeIntent.ToggleStep(selectedRecipe.id, index)) },
+            onBack = { onIntent(RecipeIntent.CloseRecipe) },
+            modifier = modifier,
+        )
+        return
+    }
 
     Scaffold(
         modifier = modifier,
@@ -156,8 +166,8 @@ private fun RecipeContent(
                 RecipeStatus.CONTENT -> items(state.recipes, key = { it.id }) { recipe ->
                     RecipeCard(
                         recipe = recipe,
-                        expanded = recipe.id == state.expandedRecipeId,
-                        onToggle = { onIntent(RecipeIntent.ToggleRecipe(recipe.id)) },
+                        completedSteps = state.completedStepsOf(recipe.id).size,
+                        onClick = { onIntent(RecipeIntent.OpenRecipe(recipe.id)) },
                     )
                 }
             }
@@ -199,14 +209,14 @@ private fun RecipeHeader(
 @Composable
 private fun RecipeCard(
     recipe: Recipe,
-    expanded: Boolean,
-    onToggle: () -> Unit,
+    completedSteps: Int,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val strings = LocalAppStrings.current
 
     Card(
-        onClick = onToggle,
+        onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
@@ -214,9 +224,15 @@ private fun RecipeCard(
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
+        RecipeHeaderImage(
+            recipe = recipe,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(140.dp),
+        )
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
                 text = recipe.title,
@@ -224,66 +240,31 @@ private fun RecipeCard(
                 fontWeight = FontWeight.Bold,
             )
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Filled.Schedule,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.width(4.dp))
+            RecipeMeta(recipe)
+
+            // Cooking already started: show how far it got.
+            if (completedSteps > 0) {
                 Text(
-                    text = strings.minutes(recipe.prepTimeMinutes),
+                    text = strings.stepsProgress(completedSteps, recipe.steps.size),
                     style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
                 )
-                Spacer(Modifier.width(12.dp))
-                Text(
-                    text = strings.difficulty(recipe.difficulty),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-
-            AnimatedVisibility(visible = expanded) {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    SectionTitle(strings.ingredientsTitle)
-                    recipe.ingredients.forEach { ingredient ->
-                        Text(text = "• $ingredient", style = MaterialTheme.typography.bodyMedium)
-                    }
-
-                    Spacer(Modifier.height(4.dp))
-
-                    SectionTitle(strings.stepsTitle)
-                    recipe.steps.forEachIndexed { index, step ->
-                        Text(text = "${index + 1}. $step", style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = if (expanded) strings.hideRecipe else strings.showRecipe,
+                    text = strings.showRecipe,
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Icon(
-                    imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                 )
             }
         }
     }
-}
-
-@Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary,
-    )
 }
 
 @Composable

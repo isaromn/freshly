@@ -34,6 +34,10 @@ data class Recipe(
     val prepTimeMinutes: Int,
     val difficulty: RecipeDifficulty,
     val source: RecipeSource,
+    /** Category of the main ingredient; picks the local header image when there is no [imageUrl]. */
+    val category: Category = Category.OTHER,
+    /** Photo of the dish, loaded from the network when there is one. */
+    val imageUrl: String? = null,
 ) {
     /** `true` when Gemini wrote the recipe, `false` when it comes from the offline templates. */
     val isAiGenerated: Boolean

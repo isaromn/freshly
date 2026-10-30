@@ -211,7 +211,8 @@ object EnglishStrings : AppStrings {
 
     override val ingredientsTitle = "Ingredients"
     override val stepsTitle = "Steps"
-    override val hideRecipe = "Hide recipe"
+    override fun stepsProgress(done: Int, total: Int) = "$done of $total steps completed"
+    override val allStepsDone = "All done! Enjoy your meal."
     override val showRecipe = "View recipe"
     override val recipesLoadError = "Couldn't load the recipes. Please try again."
     override val recipeAiFailed = "Couldn't generate an AI recipe."

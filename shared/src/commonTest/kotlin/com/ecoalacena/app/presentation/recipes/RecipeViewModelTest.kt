@@ -52,7 +52,7 @@ class RecipeViewModelTest {
         assertTrue(state.recipes.isNotEmpty())
         assertTrue(state.recipes.all { it.source == RecipeSource.OFFLINE })
         assertEquals(listOf("Zanahoria"), state.usedIngredients)
-        assertEquals(state.recipes.first().id, state.expandedRecipeId)
+        assertNull(state.selectedRecipe)
         assertTrue("clave de Gemini" in state.aiNotice.orEmpty())
         assertTrue("recetas locales" in state.aiNotice.orEmpty())
     }
@@ -68,7 +68,7 @@ class RecipeViewModelTest {
     }
 
     @Test
-    fun toggleRecipeExpandsOneRecipeAtATime() {
+    fun openingAndClosingARecipe() {
         val viewModel = viewModelFor(
             FakePantryRepository(
                 listOf(
@@ -80,12 +80,39 @@ class RecipeViewModelTest {
         viewModel.onIntent(RecipeIntent.Refresh)
         val recipes = viewModel.state.value.recipes
         assertTrue(recipes.size >= 2)
+        assertNull(viewModel.state.value.selectedRecipe)
 
-        viewModel.onIntent(RecipeIntent.ToggleRecipe(recipes[1].id))
-        assertEquals(recipes[1].id, viewModel.state.value.expandedRecipeId)
+        viewModel.onIntent(RecipeIntent.OpenRecipe(recipes[1].id))
+        assertEquals(recipes[1], viewModel.state.value.selectedRecipe)
 
-        viewModel.onIntent(RecipeIntent.ToggleRecipe(recipes[1].id))
-        assertNull(viewModel.state.value.expandedRecipeId)
+        viewModel.onIntent(RecipeIntent.CloseRecipe)
+        assertNull(viewModel.state.value.selectedRecipe)
+    }
+
+    @Test
+    fun stepsAreTickedOffAndUnticked() {
+        val viewModel = viewModelFor(FakePantryRepository(listOf(testItem("1", "Zanahoria", expiresInDays = 2))))
+        viewModel.onIntent(RecipeIntent.Refresh)
+        val recipe = viewModel.state.value.recipes.first()
+        assertTrue(recipe.steps.size >= 2)
+
+        viewModel.onIntent(RecipeIntent.ToggleStep(recipe.id, 0))
+        viewModel.onIntent(RecipeIntent.ToggleStep(recipe.id, 1))
+        assertEquals(setOf(0, 1), viewModel.state.value.completedStepsOf(recipe.id))
+
+        viewModel.onIntent(RecipeIntent.ToggleStep(recipe.id, 0))
+        assertEquals(setOf(1), viewModel.state.value.completedStepsOf(recipe.id))
+    }
+
+    @Test
+    fun stepOutsideTheRecipeIsIgnored() {
+        val viewModel = viewModelFor(FakePantryRepository(listOf(testItem("1", "Zanahoria", expiresInDays = 2))))
+        viewModel.onIntent(RecipeIntent.Refresh)
+        val recipe = viewModel.state.value.recipes.first()
+
+        viewModel.onIntent(RecipeIntent.ToggleStep(recipe.id, recipe.steps.size))
+
+        assertTrue(viewModel.state.value.completedStepsOf(recipe.id).isEmpty())
     }
 
     @Test
@@ -97,11 +124,11 @@ class RecipeViewModelTest {
         assertEquals(RecipeStatus.CONTENT, viewModel.state.value.status)
         assertEquals(listOf("Zanahoria"), viewModel.state.value.usedIngredients)
 
-        // Collapse the recipe: showing the screen again with the same pantry must not reload.
+        // Tick a step: showing the screen again with the same pantry must not reload (and lose it).
         val firstId = viewModel.state.value.recipes.first().id
-        viewModel.onIntent(RecipeIntent.ToggleRecipe(firstId))
+        viewModel.onIntent(RecipeIntent.ToggleStep(firstId, 0))
         viewModel.onIntent(RecipeIntent.ScreenShown)
-        assertNull(viewModel.state.value.expandedRecipeId)
+        assertEquals(setOf(0), viewModel.state.value.completedStepsOf(firstId))
 
         // A new item changes the ingredients, so the recipes are rebuilt.
         repository.upsert(testItem("2", "Cebolla", expiresInDays = 1))

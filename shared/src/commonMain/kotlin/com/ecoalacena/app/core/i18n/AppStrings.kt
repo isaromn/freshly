@@ -144,7 +144,8 @@ interface AppStrings {
     fun difficulty(level: RecipeDifficulty): String
     val ingredientsTitle: String
     val stepsTitle: String
-    val hideRecipe: String
+    fun stepsProgress(done: Int, total: Int): String
+    val allStepsDone: String
     val showRecipe: String
     val recipesLoadError: String
     val recipeAiFailed: String

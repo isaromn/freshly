@@ -63,6 +63,7 @@ class LocalRecipeEngine(
             prepTimeMinutes = 20,
             difficulty = RecipeDifficulty.EASY,
             source = RecipeSource.OFFLINE,
+            category = ingredients.first().category,
         )
     }
 
@@ -87,6 +88,7 @@ class LocalRecipeEngine(
                 prepTimeMinutes = template.prepTimeMinutes,
                 difficulty = template.difficulty,
                 source = RecipeSource.OFFLINE,
+                category = items.first().category,
             )
         }
     }

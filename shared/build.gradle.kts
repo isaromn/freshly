@@ -81,6 +81,10 @@ kotlin {
 
             // FileKit (camera and gallery pickers)
             implementation(libs.filekit.dialogs.compose)
+
+            // Coil (async image loading for recipe photos, through the Ktor client)
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor3)
         }
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
