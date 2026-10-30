@@ -107,6 +107,10 @@ interface AppStrings {
     val reviewHint: String
     val oneDayLess: String
     val oneDayMore: String
+    val editQuantity: String
+    val lessQuantity: String
+    val moreQuantity: String
+    val changeExpirationDate: String
     val removeProduct: String
     val noExpirationLabel: String
     val expiresToday: String

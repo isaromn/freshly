@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DocumentScanner
@@ -29,7 +28,6 @@ import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -70,7 +68,6 @@ import com.ecoalacena.app.domain.model.PantryItem
 import com.ecoalacena.app.presentation.i18n.LocalAppStrings
 import com.ecoalacena.app.presentation.platform.PlatformBackHandler
 import com.ecoalacena.app.presentation.platform.rememberCameraLauncher
-import com.ecoalacena.app.presentation.util.formatQuantity
 import com.ecoalacena.app.presentation.util.icon
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.dialogs.FileKitType
@@ -451,6 +448,8 @@ private fun ReviewContent(
                     enabled = !isSaving,
                     onRemove = { onIntent(ScanIntent.RemoveDraft(draft.id)) },
                     onAdjustDays = { delta -> onIntent(ScanIntent.AdjustExpiration(draft.id, delta)) },
+                    onDateSelected = { date -> onIntent(ScanIntent.SetExpiration(draft.id, date)) },
+                    onQuantityChange = { quantity -> onIntent(ScanIntent.UpdateQuantity(draft.id, quantity)) },
                 )
             }
         }
@@ -501,6 +500,8 @@ private fun DraftItemCard(
     enabled: Boolean,
     onRemove: () -> Unit,
     onAdjustDays: (Int) -> Unit,
+    onDateSelected: (Long) -> Unit,
+    onQuantityChange: (Double) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val strings = LocalAppStrings.current
@@ -553,26 +554,29 @@ private fun DraftItemCard(
                     }
                 }
                 Text(
-                    text = "${formatQuantity(draft.quantity)} ${strings.unitShort(draft.unit)} · " +
-                        strings.categoryLabel(draft.category),
+                    text = strings.categoryLabel(draft.category),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                 )
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { onAdjustDays(-1) }, enabled = enabled) {
-                        Icon(Icons.Filled.Remove, contentDescription = strings.oneDayLess)
-                    }
-                    Text(
-                        text = expirationLabel(strings, draft.expirationDate, now),
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                    IconButton(onClick = { onAdjustDays(1) }, enabled = enabled) {
-                        Icon(Icons.Filled.Add, contentDescription = strings.oneDayMore)
-                    }
-                }
+                // Quantity and expiration date can be changed here, before saving to the pantry.
+                EditableQuantity(
+                    quantity = draft.quantity,
+                    unitLabel = strings.unitShort(draft.unit),
+                    unitCode = draft.unit,
+                    enabled = enabled,
+                    onQuantityChange = onQuantityChange,
+                )
+
+                EditableExpiration(
+                    label = expirationLabel(strings, draft.expirationDate, now),
+                    expirationDate = draft.expirationDate,
+                    now = now,
+                    enabled = enabled,
+                    onAdjustDays = onAdjustDays,
+                    onDateSelected = onDateSelected,
+                )
             }
 
             IconButton(onClick = onRemove, enabled = enabled) {

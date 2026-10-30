@@ -6,6 +6,7 @@ import com.ecoalacena.app.core.MILLIS_PER_DAY
 import com.ecoalacena.app.core.currentEpochMillis
 import com.ecoalacena.app.core.i18n.AppStrings
 import com.ecoalacena.app.core.i18n.currentStrings
+import com.ecoalacena.app.domain.model.PantryItem
 import com.ecoalacena.app.domain.repository.PantryRepository
 import com.ecoalacena.app.domain.usecase.AnalyzeFoodUseCase
 import com.ecoalacena.app.presentation.util.toGeminiUserMessage
@@ -44,6 +45,8 @@ class ScanViewModel(
             ScanIntent.Reset -> reset()
             is ScanIntent.RemoveDraft -> removeDraft(intent.id)
             is ScanIntent.AdjustExpiration -> adjustExpiration(intent.id, intent.deltaDays)
+            is ScanIntent.UpdateQuantity -> updateQuantity(intent.id, intent.quantity)
+            is ScanIntent.SetExpiration -> setExpiration(intent.id, intent.expirationDate)
             ScanIntent.Confirm -> confirm()
             ScanIntent.LoadDemoReceipt -> loadDemoReceipt()
         }
@@ -111,18 +114,25 @@ class ScanViewModel(
 
     private fun adjustExpiration(id: String, deltaDays: Int) {
         val now = nowMillis()
+        updateDraft(id) { draft ->
+            val base = draft.expirationDate ?: now
+            draft.copy(expirationDate = (base + deltaDays * MILLIS_PER_DAY).coerceAtLeast(now))
+        }
+    }
+
+    private fun updateQuantity(id: String, quantity: Double) {
+        if (!quantity.isFinite() || quantity <= 0.0) return
+        updateDraft(id) { draft -> draft.copy(quantity = quantity) }
+    }
+
+    private fun setExpiration(id: String, expirationDate: Long) {
+        val now = nowMillis()
+        updateDraft(id) { draft -> draft.copy(expirationDate = expirationDate.coerceAtLeast(now)) }
+    }
+
+    private fun updateDraft(id: String, change: (PantryItem) -> PantryItem) {
         _state.update { current ->
-            current.copy(
-                drafts = current.drafts.map { draft ->
-                    if (draft.id != id) {
-                        draft
-                    } else {
-                        val base = draft.expirationDate ?: now
-                        val adjusted = (base + deltaDays * MILLIS_PER_DAY).coerceAtLeast(now)
-                        draft.copy(expirationDate = adjusted)
-                    }
-                },
-            )
+            current.copy(drafts = current.drafts.map { draft -> if (draft.id == id) change(draft) else draft })
         }
     }
 

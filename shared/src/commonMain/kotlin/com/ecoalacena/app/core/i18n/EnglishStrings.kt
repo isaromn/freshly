@@ -155,9 +155,13 @@ object EnglishStrings : AppStrings {
             else -> "Found $count items"
         }
 
-    override val reviewHint = "Review the details and adjust the expiration date suggested by the AI."
+    override val reviewHint = "Review the details: tap the quantity or the expiration date to change them."
     override val oneDayLess = "One day less"
     override val oneDayMore = "One day more"
+    override val editQuantity = "Edit quantity"
+    override val lessQuantity = "Decrease quantity"
+    override val moreQuantity = "Increase quantity"
+    override val changeExpirationDate = "Change expiration date"
     override val removeProduct = "Remove item"
     override val noExpirationLabel = "No expiration date"
     override val expiresToday = "Expires today"

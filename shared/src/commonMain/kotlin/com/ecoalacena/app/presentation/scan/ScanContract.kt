@@ -36,6 +36,12 @@ sealed interface ScanIntent {
     data object Reset : ScanIntent
     data class RemoveDraft(val id: String) : ScanIntent
     data class AdjustExpiration(val id: String, val deltaDays: Int) : ScanIntent
+
+    /** Replaces the quantity of a product; values that are not positive are ignored. */
+    data class UpdateQuantity(val id: String, val quantity: Double) : ScanIntent
+
+    /** Sets the exact expiration date picked in the calendar (never earlier than now). */
+    data class SetExpiration(val id: String, val expirationDate: Long) : ScanIntent
     data object Confirm : ScanIntent
 
     /** Demo mode: loads a preloaded receipt, with no network or API key needed. */

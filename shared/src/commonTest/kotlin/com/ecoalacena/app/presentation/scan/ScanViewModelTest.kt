@@ -113,6 +113,53 @@ class ScanViewModelTest {
     }
 
     @Test
+    fun editedQuantityIsSaved() {
+        val viewModel = viewModel()
+        viewModel.onIntent(ScanIntent.LoadDemoReceipt)
+        val edited = viewModel.state.value.drafts.first()
+
+        viewModel.onIntent(ScanIntent.UpdateQuantity(edited.id, 3.5))
+        viewModel.onIntent(ScanIntent.Confirm)
+
+        assertEquals(3.5, repository.items.value.first { it.id == edited.id }.quantity)
+    }
+
+    @Test
+    fun quantityThatIsNotPositiveIsIgnored() {
+        val viewModel = viewModel()
+        viewModel.onIntent(ScanIntent.LoadDemoReceipt)
+        val draft = viewModel.state.value.drafts.first()
+
+        viewModel.onIntent(ScanIntent.UpdateQuantity(draft.id, 0.0))
+        viewModel.onIntent(ScanIntent.UpdateQuantity(draft.id, -2.0))
+
+        assertEquals(draft.quantity, viewModel.state.value.drafts.first().quantity)
+    }
+
+    @Test
+    fun pickedExpirationDateReplacesTheSuggestion() {
+        val viewModel = viewModel()
+        viewModel.onIntent(ScanIntent.LoadDemoReceipt)
+        val draft = viewModel.state.value.drafts.first()
+        val picked = TEST_NOW + 10 * MILLIS_PER_DAY
+
+        viewModel.onIntent(ScanIntent.SetExpiration(draft.id, picked))
+
+        assertEquals(picked, viewModel.state.value.drafts.first().expirationDate)
+    }
+
+    @Test
+    fun pickedExpirationDateIsNeverInThePast() {
+        val viewModel = viewModel()
+        viewModel.onIntent(ScanIntent.LoadDemoReceipt)
+        val draft = viewModel.state.value.drafts.first()
+
+        viewModel.onIntent(ScanIntent.SetExpiration(draft.id, TEST_NOW - 3 * MILLIS_PER_DAY))
+
+        assertEquals(TEST_NOW, viewModel.state.value.drafts.first().expirationDate)
+    }
+
+    @Test
     fun resetDiscardsTheDemoReceipt() {
         val viewModel = viewModel()
         viewModel.onIntent(ScanIntent.LoadDemoReceipt)
