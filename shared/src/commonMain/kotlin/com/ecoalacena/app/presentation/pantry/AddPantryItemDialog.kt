@@ -1,14 +1,16 @@
 package com.ecoalacena.app.presentation.pantry
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -25,10 +27,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
@@ -39,6 +42,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -56,6 +61,50 @@ import com.ecoalacena.app.presentation.util.formatQuantity
 private val UNIT_CODES = listOf("kg", "g", "l", "ml", "unit", "pack")
 
 private const val DEFAULT_UNIT = "unit"
+
+/** Rounded corners shared by every field of the form. */
+private val FieldShape = RoundedCornerShape(12.dp)
+
+/**
+ * Border of an idle field. The theme `outline` is almost the same color as the dialog in dark
+ * mode, so the fields use a stronger tone that stays visible in both themes.
+ */
+@Composable
+private fun fieldBorderColor(): Color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+
+/**
+ * Field colors for the form: a visible border and a filled background, so each field stands out
+ * from the dialog on Android and desktop, in light and dark mode.
+ */
+@Composable
+private fun formFieldColors(): TextFieldColors {
+    val colors = MaterialTheme.colorScheme
+    return OutlinedTextFieldDefaults.colors(
+        focusedContainerColor = colors.surfaceVariant,
+        unfocusedContainerColor = colors.surfaceVariant,
+        disabledContainerColor = colors.surfaceVariant,
+        errorContainerColor = colors.surfaceVariant,
+        focusedBorderColor = colors.primary,
+        unfocusedBorderColor = fieldBorderColor(),
+    )
+}
+
+/** A form field with its [label] written above it instead of inside the border. */
+@Composable
+private fun LabeledField(
+    label: String,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        content()
+    }
+}
 
 /**
  * Modal form to add a food item by hand, or to edit [initialItem] when it is not `null`.
@@ -109,73 +158,89 @@ fun AddPantryItemDialog(
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text(strings.fieldName) },
-                    singleLine = true,
-                    isError = submitted && !nameIsValid,
-                    supportingText = if (submitted && !nameIsValid) {
-                        { Text(strings.nameRequired) }
-                    } else {
-                        null
-                    },
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
-                DropdownField(
-                    label = strings.fieldCategory,
-                    selectedText = strings.categoryLabel(category),
-                    options = Category.entries,
-                    optionText = { strings.categoryLabel(it) },
-                    onSelected = { categoryName = it.name },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                LabeledField(label = strings.fieldName) {
                     OutlinedTextField(
-                        value = quantityText,
-                        onValueChange = { quantityText = it },
-                        label = { Text(strings.fieldQuantity) },
+                        value = name,
+                        onValueChange = { name = it },
                         singleLine = true,
-                        isError = submitted && !quantityIsValid,
-                        supportingText = if (submitted && !quantityIsValid) {
-                            { Text(strings.quantityInvalid) }
+                        isError = submitted && !nameIsValid,
+                        supportingText = if (submitted && !nameIsValid) {
+                            { Text(strings.nameRequired) }
                         } else {
                             null
                         },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.weight(1f),
-                    )
-                    DropdownField(
-                        label = strings.fieldUnit,
-                        selectedText = strings.unitName(unit),
-                        options = unitOptions,
-                        optionText = { strings.unitName(it) },
-                        onSelected = { unit = it },
-                        modifier = Modifier.weight(1f),
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                        shape = FieldShape,
+                        colors = formFieldColors(),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
 
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = strings.fieldExpiration,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                LabeledField(label = strings.fieldCategory) {
+                    DropdownField(
+                        label = strings.fieldCategory,
+                        selectedText = strings.categoryLabel(category),
+                        options = Category.entries,
+                        optionText = { strings.categoryLabel(it) },
+                        onSelected = { categoryName = it.name },
+                        modifier = Modifier.fillMaxWidth(),
                     )
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    LabeledField(label = strings.fieldQuantity, modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = quantityText,
+                            onValueChange = { quantityText = it },
+                            singleLine = true,
+                            isError = submitted && !quantityIsValid,
+                            supportingText = if (submitted && !quantityIsValid) {
+                                { Text(strings.quantityInvalid) }
+                            } else {
+                                null
+                            },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            shape = FieldShape,
+                            colors = formFieldColors(),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    LabeledField(label = strings.fieldUnit, modifier = Modifier.weight(1f)) {
+                        DropdownField(
+                            label = strings.fieldUnit,
+                            selectedText = strings.unitName(unit),
+                            options = unitOptions,
+                            optionText = { strings.unitName(it) },
+                            onSelected = { unit = it },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+
+                LabeledField(label = strings.fieldExpiration) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        OutlinedButton(
-                            onClick = { showDatePicker = true },
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            Icon(Icons.Filled.CalendarMonth, contentDescription = null)
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = expirationDate?.let { formatDate(it, strings.language) }
+                        Box(modifier = Modifier.weight(1f)) {
+                            OutlinedTextField(
+                                value = expirationDate?.let { formatDate(it, strings.language) }
                                     ?: strings.noExpirationDate,
+                                onValueChange = {},
+                                readOnly = true,
+                                singleLine = true,
+                                leadingIcon = { Icon(Icons.Filled.CalendarMonth, contentDescription = null) },
+                                shape = FieldShape,
+                                colors = formFieldColors(),
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            // The field is read-only: a click anywhere on it opens the date picker.
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clip(FieldShape)
+                                    .clickable(onClickLabel = strings.fieldExpiration, role = Role.Button) {
+                                        showDatePicker = true
+                                    },
                             )
                         }
                         if (expirationDate != null) {
@@ -189,16 +254,21 @@ fun AddPantryItemDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .clip(FieldShape)
+                        .border(1.dp, fieldBorderColor(), FieldShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                         .toggleable(
                             value = isOrganic,
                             role = Role.Switch,
                             onValueChange = { isOrganic = it },
-                        ),
+                        )
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = strings.fieldOrganic,
                         style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f),
                     )
                     // The whole row is the touch target, so the switch itself does not handle clicks.
@@ -289,14 +359,16 @@ private fun <T> DropdownField(
             onValueChange = {},
             readOnly = true,
             singleLine = true,
-            label = { Text(label) },
             trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
+            shape = FieldShape,
+            colors = formFieldColors(),
             modifier = Modifier.fillMaxWidth(),
         )
 
         Box(
             modifier = Modifier
                 .matchParentSize()
+                .clip(FieldShape)
                 .clickable(onClickLabel = label, role = Role.DropdownList) { expanded = true },
         )
 

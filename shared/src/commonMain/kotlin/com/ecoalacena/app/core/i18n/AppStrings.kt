@@ -57,6 +57,8 @@ interface AppStrings {
     val noItemsInCategory: String
     val fabScan: String
     val fabAddItem: String
+    val fabOpenMenu: String
+    val fabCloseMenu: String
     fun consumedExpiredMessage(name: String): String
     fun consumedSavedMessage(name: String, kg: String): String
     fun consumedMessage(name: String): String

@@ -79,8 +79,10 @@ object SpanishStrings : AppStrings {
     override val emptyPantryHint = "Escanea un recibo del supermercado o agrega tus productos para empezar."
     override val scanNow = "Escanear ahora"
     override val noItemsInCategory = "No hay productos en esta categoría"
-    override val fabScan = "Escanear"
-    override val fabAddItem = "Agregar alimento"
+    override val fabScan = "Escanear foto"
+    override val fabAddItem = "Agregar manualmente"
+    override val fabOpenMenu = "Agregar alimento"
+    override val fabCloseMenu = "Cerrar menú"
 
     override fun consumedExpiredMessage(name: String) = "«$name» marcado como consumido."
 

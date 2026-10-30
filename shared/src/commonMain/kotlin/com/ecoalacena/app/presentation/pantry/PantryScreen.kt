@@ -23,10 +23,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material3.Button
@@ -34,7 +32,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -111,25 +108,10 @@ private fun PantryContent(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                ExtendedFloatingActionButton(
-                    onClick = { onIntent(PantryIntent.ScanClicked) },
-                    icon = { Icon(Icons.Filled.DocumentScanner, contentDescription = null) },
-                    text = { Text(strings.fabScan) },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                )
-                ExtendedFloatingActionButton(
-                    onClick = { onIntent(PantryIntent.AddItemClicked) },
-                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                    text = { Text(strings.fabAddItem) },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                )
-            }
+            AddFoodSpeedDial(
+                onScanClick = { onIntent(PantryIntent.ScanClicked) },
+                onAddManuallyClick = { onIntent(PantryIntent.AddItemClicked) },
+            )
         },
     ) { innerPadding ->
         // One column on phones; as many 340 dp columns as fit on a computer window.
@@ -140,8 +122,8 @@ private fun PantryContent(
                 start = 16.dp,
                 end = 16.dp,
                 top = innerPadding.calculateTopPadding() + 16.dp,
-                // Room for the two stacked floating buttons.
-                bottom = innerPadding.calculateBottomPadding() + 176.dp,
+                // Room for the floating "+" button, so it never covers the last card.
+                bottom = innerPadding.calculateBottomPadding() + 88.dp,
             ),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
