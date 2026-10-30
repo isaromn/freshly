@@ -37,6 +37,13 @@ sealed interface ScanIntent {
     data class RemoveDraft(val id: String) : ScanIntent
     data class AdjustExpiration(val id: String, val deltaDays: Int) : ScanIntent
 
+    /**
+     * Corrects the name of a product the AI got wrong; a blank name is ignored. When the new name
+     * is a known food, the category follows it ("Manzana" moves the item to fruits & vegetables),
+     * and the expiration date is estimated again for the new food.
+     */
+    data class RenameDraft(val id: String, val name: String) : ScanIntent
+
     /** Replaces the quantity of a product; values that are not positive are ignored. */
     data class UpdateQuantity(val id: String, val quantity: Double) : ScanIntent
 

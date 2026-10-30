@@ -450,6 +450,7 @@ private fun ReviewContent(
                     onAdjustDays = { delta -> onIntent(ScanIntent.AdjustExpiration(draft.id, delta)) },
                     onDateSelected = { date -> onIntent(ScanIntent.SetExpiration(draft.id, date)) },
                     onQuantityChange = { quantity -> onIntent(ScanIntent.UpdateQuantity(draft.id, quantity)) },
+                    onRename = { name -> onIntent(ScanIntent.RenameDraft(draft.id, name)) },
                 )
             }
         }
@@ -502,6 +503,7 @@ private fun DraftItemCard(
     onAdjustDays: (Int) -> Unit,
     onDateSelected: (Long) -> Unit,
     onQuantityChange: (Double) -> Unit,
+    onRename: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val strings = LocalAppStrings.current
@@ -535,24 +537,21 @@ private fun DraftItemCard(
             Spacer(Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = draft.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                    if (draft.isOrganic) {
-                        Spacer(Modifier.width(6.dp))
-                        Icon(
-                            imageVector = Icons.Filled.Eco,
-                            contentDescription = strings.organic,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp),
-                        )
-                    }
-                }
+                EditableName(
+                    name = draft.name,
+                    enabled = enabled,
+                    onRename = onRename,
+                    trailing = {
+                        if (draft.isOrganic) {
+                            Icon(
+                                imageVector = Icons.Filled.Eco,
+                                contentDescription = strings.organic,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                    },
+                )
                 Text(
                     text = strings.categoryLabel(draft.category),
                     style = MaterialTheme.typography.bodySmall,

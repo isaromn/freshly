@@ -6,9 +6,11 @@ import com.ecoalacena.app.core.MILLIS_PER_DAY
 import com.ecoalacena.app.core.currentEpochMillis
 import com.ecoalacena.app.core.i18n.AppStrings
 import com.ecoalacena.app.core.i18n.currentStrings
+import com.ecoalacena.app.domain.model.FoodClassifier
 import com.ecoalacena.app.domain.model.PantryItem
 import com.ecoalacena.app.domain.repository.PantryRepository
 import com.ecoalacena.app.domain.usecase.AnalyzeFoodUseCase
+import com.ecoalacena.app.domain.usecase.EstimateExpirationDateUseCase
 import com.ecoalacena.app.presentation.util.toGeminiUserMessage
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Job
@@ -25,6 +27,8 @@ class ScanViewModel(
     private val analyzeFood: AnalyzeFoodUseCase,
     private val repository: PantryRepository,
     private val nowMillis: () -> Long = ::currentEpochMillis,
+    /** Gives a renamed product the shelf life of the new food. */
+    private val estimateExpiration: EstimateExpirationDateUseCase = EstimateExpirationDateUseCase(nowMillis),
     /** Texts for the user's language; read each time a message is built. */
     private val strings: () -> AppStrings = ::currentStrings,
 ) : ViewModel() {
@@ -45,6 +49,7 @@ class ScanViewModel(
             ScanIntent.Reset -> reset()
             is ScanIntent.RemoveDraft -> removeDraft(intent.id)
             is ScanIntent.AdjustExpiration -> adjustExpiration(intent.id, intent.deltaDays)
+            is ScanIntent.RenameDraft -> renameDraft(intent.id, intent.name)
             is ScanIntent.UpdateQuantity -> updateQuantity(intent.id, intent.quantity)
             is ScanIntent.SetExpiration -> setExpiration(intent.id, intent.expirationDate)
             ScanIntent.Confirm -> confirm()
@@ -117,6 +122,21 @@ class ScanViewModel(
         updateDraft(id) { draft ->
             val base = draft.expirationDate ?: now
             draft.copy(expirationDate = (base + deltaDays * MILLIS_PER_DAY).coerceAtLeast(now))
+        }
+    }
+
+    private fun renameDraft(id: String, name: String) {
+        val cleanName = name.trim().replace(Regex("\\s+"), " ")
+        if (cleanName.isEmpty()) return
+        val now = nowMillis()
+        updateDraft(id) { draft ->
+            // The old date belonged to the food the AI saw, so it is estimated again for the new one.
+            val category = FoodClassifier.categoryOf(cleanName) ?: draft.category
+            draft.copy(
+                name = cleanName,
+                category = category,
+                expirationDate = estimateExpiration(cleanName, category, now),
+            )
         }
     }
 

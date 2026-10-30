@@ -154,9 +154,10 @@ object SpanishStrings : AppStrings {
             else -> "Encontré $count productos"
         }
 
-    override val reviewHint = "Revisa los datos: toca la cantidad o la fecha de caducidad para cambiarlas."
+    override val reviewHint = "Revisa los datos: toca el nombre, la cantidad o la fecha de caducidad para cambiarlos."
     override val oneDayLess = "Un día menos"
     override val oneDayMore = "Un día más"
+    override val editName = "Editar nombre"
     override val editQuantity = "Editar cantidad"
     override val lessQuantity = "Disminuir cantidad"
     override val moreQuantity = "Aumentar cantidad"

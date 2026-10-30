@@ -1,5 +1,6 @@
 package com.ecoalacena.app.presentation.scan
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
@@ -25,14 +26,23 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ecoalacena.app.core.MILLIS_PER_DAY
@@ -42,6 +52,100 @@ import com.ecoalacena.app.presentation.util.formatQuantity
 
 /** Size of the small +/- buttons, so the controls fit inside a product card on a phone. */
 private val SMALL_BUTTON_SIZE = 36.dp
+
+/**
+ * Name of a scanned product, so the user can fix a food the AI got wrong. It shows as a title
+ * with a pencil; a click turns it into a text field. The new name is sent with [onRename] when
+ * the user confirms it (check button or the keyboard's Done key); a blank name cannot be saved.
+ */
+@Composable
+internal fun EditableName(
+    name: String,
+    enabled: Boolean,
+    onRename: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    trailing: @Composable () -> Unit = {},
+) {
+    val strings = LocalAppStrings.current
+    var editing by rememberSaveable { mutableStateOf(false) }
+    // Reset from the saved name each time the editor opens, but not while the user types. The
+    // whole name starts selected, so typing replaces the wrong food straight away.
+    var field by rememberSaveable(editing, stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(name, selection = TextRange(0, name.length)))
+    }
+
+    if (!editing) {
+        Row(
+            modifier = modifier
+                .clip(MaterialTheme.shapes.small)
+                .clickable(enabled = enabled, onClickLabel = strings.editName) { editing = true },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            trailing()
+            Icon(
+                imageVector = Icons.Filled.Edit,
+                contentDescription = strings.editName,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(16.dp),
+            )
+        }
+        return
+    }
+
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+
+    val isValid = field.text.isNotBlank()
+    fun confirm() {
+        if (!isValid) return
+        onRename(field.text)
+        editing = false
+    }
+
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        OutlinedTextField(
+            value = field,
+            onValueChange = { field = it },
+            enabled = enabled,
+            singleLine = true,
+            isError = !isValid,
+            textStyle = MaterialTheme.typography.bodyLarge,
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Sentences,
+                imeAction = ImeAction.Done,
+            ),
+            keyboardActions = KeyboardActions(onDone = { confirm() }),
+            shape = MaterialTheme.shapes.small,
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(focusRequester),
+        )
+        IconButton(
+            onClick = { confirm() },
+            enabled = enabled && isValid,
+            modifier = Modifier.size(SMALL_BUTTON_SIZE),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Check,
+                contentDescription = strings.ok,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
 
 /**
  * Quantity of a scanned product. It shows as a chip; a click turns it into a text field with

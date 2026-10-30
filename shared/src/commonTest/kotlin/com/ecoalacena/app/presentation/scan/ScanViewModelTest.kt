@@ -113,6 +113,58 @@ class ScanViewModelTest {
     }
 
     @Test
+    fun renamedProductIsSavedWithTheCategoryOfTheNewName() {
+        val viewModel = viewModel()
+        viewModel.onIntent(ScanIntent.LoadDemoReceipt)
+        val chicken = viewModel.state.value.drafts.first { it.name == "Pechuga de pollo" }
+
+        viewModel.onIntent(ScanIntent.RenameDraft(chicken.id, "  Manzanas   verdes "))
+        viewModel.onIntent(ScanIntent.Confirm)
+
+        val saved = repository.items.value.first { it.id == chicken.id }
+        assertEquals("Manzanas verdes", saved.name)
+        assertEquals(Category.FRUITS_VEGETABLES, saved.category)
+    }
+
+    @Test
+    fun renamingEstimatesTheExpirationDateOfTheNewFood() {
+        val viewModel = viewModel()
+        viewModel.onIntent(ScanIntent.LoadDemoReceipt)
+        val chicken = viewModel.state.value.drafts.first { it.name == "Pechuga de pollo" }
+        assertEquals(TEST_NOW + 2 * MILLIS_PER_DAY, chicken.expirationDate)
+
+        viewModel.onIntent(ScanIntent.RenameDraft(chicken.id, "Huevos"))
+
+        // Eggs last about a month, not the two days of the chicken the AI saw.
+        val renamed = viewModel.state.value.drafts.first { it.id == chicken.id }
+        assertEquals(TEST_NOW + 30 * MILLIS_PER_DAY, renamed.expirationDate)
+    }
+
+    @Test
+    fun renamingToAnUnknownFoodKeepsTheCategory() {
+        val viewModel = viewModel()
+        viewModel.onIntent(ScanIntent.LoadDemoReceipt)
+        val chicken = viewModel.state.value.drafts.first { it.name == "Pechuga de pollo" }
+
+        viewModel.onIntent(ScanIntent.RenameDraft(chicken.id, "Producto misterioso"))
+
+        val renamed = viewModel.state.value.drafts.first { it.id == chicken.id }
+        assertEquals("Producto misterioso", renamed.name)
+        assertEquals(chicken.category, renamed.category)
+    }
+
+    @Test
+    fun blankNameIsIgnored() {
+        val viewModel = viewModel()
+        viewModel.onIntent(ScanIntent.LoadDemoReceipt)
+        val draft = viewModel.state.value.drafts.first()
+
+        viewModel.onIntent(ScanIntent.RenameDraft(draft.id, "   "))
+
+        assertEquals(draft.name, viewModel.state.value.drafts.first().name)
+    }
+
+    @Test
     fun editedQuantityIsSaved() {
         val viewModel = viewModel()
         viewModel.onIntent(ScanIntent.LoadDemoReceipt)

@@ -155,9 +155,10 @@ object EnglishStrings : AppStrings {
             else -> "Found $count items"
         }
 
-    override val reviewHint = "Review the details: tap the quantity or the expiration date to change them."
+    override val reviewHint = "Review the details: tap the name, the quantity or the expiration date to change them."
     override val oneDayLess = "One day less"
     override val oneDayMore = "One day more"
+    override val editName = "Edit name"
     override val editQuantity = "Edit quantity"
     override val lessQuantity = "Decrease quantity"
     override val moreQuantity = "Increase quantity"

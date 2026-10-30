@@ -65,7 +65,7 @@ val appModule = module {
 
     // Presentation (MVI)
     viewModel { PantryViewModel(repository = get(), estimateExpiration = get()) }
-    viewModel { ScanViewModel(analyzeFood = get(), repository = get()) }
+    viewModel { ScanViewModel(analyzeFood = get(), repository = get(), estimateExpiration = get()) }
     viewModel { RecipeViewModel(getRecipes = get()) }
     viewModel { ImpactViewModel(repository = get(), calculateImpact = get()) }
 }
