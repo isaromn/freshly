@@ -1,10 +1,14 @@
 package com.ecoalacena.app
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
@@ -19,9 +23,10 @@ fun main() {
     initKoin(geminiConfig = GeminiConfig(apiKey = resolveGeminiApiKey()))
 
     application {
-        // A regular computer window, centered on the screen. It is wide enough for the side
-        // navigation and the multi-column layouts.
+        // Opens maximized so the layout uses the whole monitor. The size is only the one the
+        // window goes back to when the user restores it.
         val windowState = rememberWindowState(
+            placement = WindowPlacement.Maximized,
             position = WindowPosition.Aligned(Alignment.Center),
             size = DpSize(width = 1280.dp, height = 800.dp),
         )
@@ -36,7 +41,9 @@ fun main() {
                 window.minimumSize = Dimension(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT)
             }
 
-            App()
+            Box(modifier = Modifier.fillMaxSize()) {
+                App()
+            }
         }
     }
 }

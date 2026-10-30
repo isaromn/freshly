@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.Eco
@@ -83,9 +82,6 @@ private val mainTabSaver = Saver<MainTab, Int>(
 /** Windows at least this wide (desktop, tablets) use a side rail instead of the bottom bar. */
 private val SIDE_RAIL_MIN_WIDTH = 720.dp
 
-/** Single-column screens (scanner, recipes) stop growing at this width and stay centered. */
-private val NARROW_SCREEN_MAX_WIDTH = 840.dp
-
 @Composable
 fun App() {
     // Spanish when the system language is Spanish, English for any other language.
@@ -152,23 +148,26 @@ private fun MainContent(
     onTabSelected: (MainTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Every screen fills the whole content area, so the layout scales with the window.
     Box(modifier = modifier, contentAlignment = Alignment.TopCenter) {
         when (selectedTab) {
-            // The pantry and the impact dashboard are grids: they use the whole window.
             MainTab.PANTRY -> PantryScreen(
                 onScanClick = { onTabSelected(MainTab.SCAN) },
+                modifier = Modifier.fillMaxSize(),
             )
 
             MainTab.SCAN -> ScanScreen(
                 onBack = { onTabSelected(MainTab.PANTRY) },
-                modifier = Modifier.widthIn(max = NARROW_SCREEN_MAX_WIDTH),
+                modifier = Modifier.fillMaxSize(),
             )
 
             MainTab.RECIPES -> RecipeScreen(
-                modifier = Modifier.widthIn(max = NARROW_SCREEN_MAX_WIDTH),
+                modifier = Modifier.fillMaxSize(),
             )
 
-            MainTab.IMPACT -> ImpactScreen()
+            MainTab.IMPACT -> ImpactScreen(
+                modifier = Modifier.fillMaxSize(),
+            )
         }
     }
 }

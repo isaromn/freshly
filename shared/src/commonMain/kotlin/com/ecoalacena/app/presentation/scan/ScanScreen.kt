@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -82,6 +83,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.decodeToImageBitmap
 import org.koin.compose.viewmodel.koinViewModel
+
+// Action buttons fill the width of a phone, but stop growing on wide desktop windows.
+private val actionButtonModifier = Modifier.widthIn(max = 400.dp).fillMaxWidth()
 
 @Composable
 fun ScanScreen(
@@ -268,7 +272,7 @@ private fun PickSourceContent(
         if (onTakePhoto != null) {
             Button(
                 onClick = onTakePhoto,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = actionButtonModifier,
             ) {
                 Icon(Icons.Filled.CameraAlt, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
@@ -277,7 +281,7 @@ private fun PickSourceContent(
             Spacer(Modifier.height(12.dp))
             OutlinedButton(
                 onClick = onPickFromGallery,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = actionButtonModifier,
             ) {
                 Icon(Icons.Filled.PhotoLibrary, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
@@ -286,7 +290,7 @@ private fun PickSourceContent(
         } else {
             Button(
                 onClick = onPickFromGallery,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = actionButtonModifier,
             ) {
                 Icon(Icons.Filled.PhotoLibrary, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
@@ -394,11 +398,11 @@ private fun ErrorContent(
 
         Spacer(Modifier.height(24.dp))
 
-        Button(onClick = onRetry, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = onRetry, modifier = actionButtonModifier) {
             Text(strings.retry)
         }
         Spacer(Modifier.height(12.dp))
-        OutlinedButton(onClick = onChooseAnother, modifier = Modifier.fillMaxWidth()) {
+        OutlinedButton(onClick = onChooseAnother, modifier = actionButtonModifier) {
             Text(strings.chooseAnother)
         }
         Spacer(Modifier.height(4.dp))
@@ -458,12 +462,13 @@ private fun ReviewContent(
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Button(
                     onClick = { onIntent(ScanIntent.Confirm) },
                     enabled = count > 0 && !isSaving,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = actionButtonModifier,
                 ) {
                     if (isSaving) {
                         CircularProgressIndicator(
@@ -480,7 +485,7 @@ private fun ReviewContent(
                 OutlinedButton(
                     onClick = { onIntent(ScanIntent.Reset) },
                     enabled = !isSaving,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = actionButtonModifier,
                 ) {
                     Text(strings.discardAndChoose)
                 }
