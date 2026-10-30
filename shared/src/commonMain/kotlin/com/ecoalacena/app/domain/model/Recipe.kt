@@ -25,6 +25,29 @@ enum class RecipeDifficulty {
     }
 }
 
+/** Kind of dish. It picks the local illustration of a recipe when there is no photo. */
+enum class RecipeCategory {
+    SOUP,
+    SALAD,
+    PASTA,
+    RICE,
+    MEAT,
+    EGGS,
+    SANDWICH,
+    DRINK,
+    DESSERT,
+    OTHER;
+
+    companion object {
+
+        /** Maps the code returned by the AI to a category, defaulting to [OTHER]. */
+        fun fromRaw(raw: String?): RecipeCategory {
+            val key = raw?.trim()?.uppercase().orEmpty()
+            return entries.firstOrNull { it.name == key } ?: OTHER
+        }
+    }
+}
+
 data class Recipe(
     val id: String,
     val title: String,
@@ -34,10 +57,13 @@ data class Recipe(
     val prepTimeMinutes: Int,
     val difficulty: RecipeDifficulty,
     val source: RecipeSource,
-    /** Category of the main ingredient; picks the local header image when there is no [imageUrl]. */
-    val category: Category = Category.OTHER,
-    /** Photo of the dish, loaded from the network when there is one. */
+    val category: RecipeCategory = RecipeCategory.OTHER,
+    /** A few English words to search a photo of the dish, e.g. "vegetable soup". */
+    val imageQuery: String = "",
+    /** Photo of the dish, loaded from the network; `null` shows the local illustration of [category]. */
     val imageUrl: String? = null,
+    /** Who took the photo, shown next to it (required by Unsplash); `null` when there is no photo. */
+    val imageCredit: String? = null,
 ) {
     /** `true` when Gemini wrote the recipe, `false` when it comes from the offline templates. */
     val isAiGenerated: Boolean

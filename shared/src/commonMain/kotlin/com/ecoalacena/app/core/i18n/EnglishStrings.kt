@@ -213,6 +213,7 @@ object EnglishStrings : AppStrings {
     override val stepsTitle = "Steps"
     override fun stepsProgress(done: Int, total: Int) = "$done of $total steps completed"
     override val allStepsDone = "All done! Enjoy your meal."
+    override fun photoCredit(name: String) = "Photo by $name on Unsplash"
     override val showRecipe = "View recipe"
     override val recipesLoadError = "Couldn't load the recipes. Please try again."
     override val recipeAiFailed = "Couldn't generate an AI recipe."

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Offline illustration for rice recipes. Generated from the Material icon of the category. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="160dp"
+    android:viewportWidth="320"
+    android:viewportHeight="160">
+    <path
+        android:fillColor="#4F8F86"
+        android:pathData="M0,0 H320 V160 H0 Z" />
+    <path
+        android:fillColor="#000000"
+        android:fillAlpha="0.12"
+        android:pathData="M0,110 C80,90 200,150 320,100 V160 H0 Z" />
+    <group
+        android:pivotX="12"
+        android:pivotY="12"
+        android:rotation="-20"
+        android:scaleX="6"
+        android:scaleY="6"
+        android:translateX="28"
+        android:translateY="18">
+        <path
+            android:fillColor="#FFFFFF"
+            android:fillAlpha="0.12"
+            android:pathData="M22,12 L22,12 c0,-5.52 -4.48,-10 -10,-10 S2,6.48 2,12 c0,3.69 2.47,6.86 6,8.25 V22 h8 v-1.75 C19.53,18.86 22,15.69 22,12 Z M20,12 h-4 V5.08 C18.39,6.47 20,9.05 20,12 Z M14,4.26 V12 h-4 V4.26 C10.64,4.1 11.31,4 12,4 S13.36,4.1 14,4.26 Z M4,12 c0,-2.95 1.61,-5.53 4,-6.92 V12 H4 Z" />
+    </group>
+    <group
+        android:pivotX="12"
+        android:pivotY="12"
+        android:rotation="15"
+        android:scaleX="6.5"
+        android:scaleY="6.5"
+        android:translateX="273"
+        android:translateY="118">
+        <path
+            android:fillColor="#FFFFFF"
+            android:fillAlpha="0.12"
+            android:pathData="M22,12 L22,12 c0,-5.52 -4.48,-10 -10,-10 S2,6.48 2,12 c0,3.69 2.47,6.86 6,8.25 V22 h8 v-1.75 C19.53,18.86 22,15.69 22,12 Z M20,12 h-4 V5.08 C18.39,6.47 20,9.05 20,12 Z M14,4.26 V12 h-4 V4.26 C10.64,4.1 11.31,4 12,4 S13.36,4.1 14,4.26 Z M4,12 c0,-2.95 1.61,-5.53 4,-6.92 V12 H4 Z" />
+    </group>
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.18"
+        android:pathData="M160,80 m-46,0 a46,46 0 1,0 92,0 a46,46 0 1,0 -92,0" />
+    <group
+        android:pivotX="12"
+        android:pivotY="12"
+        android:rotation="0"
+        android:scaleX="2.6"
+        android:scaleY="2.6"
+        android:translateX="148"
+        android:translateY="68">
+        <path
+            android:fillColor="#FFFFFF"
+            android:fillAlpha="0.95"
+            android:pathData="M22,12 L22,12 c0,-5.52 -4.48,-10 -10,-10 S2,6.48 2,12 c0,3.69 2.47,6.86 6,8.25 V22 h8 v-1.75 C19.53,18.86 22,15.69 22,12 Z M20,12 h-4 V5.08 C18.39,6.47 20,9.05 20,12 Z M14,4.26 V12 h-4 V4.26 C10.64,4.1 11.31,4 12,4 S13.36,4.1 14,4.26 Z M4,12 c0,-2.95 1.61,-5.53 4,-6.92 V12 H4 Z" />
+    </group>
+</vector>

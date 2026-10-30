@@ -6,18 +6,22 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
-// Gemini API key for local development. Define GEMINI_API_KEY in local.properties
-// (which is git-ignored) or as an environment variable. Never commit a real key.
-val geminiApiKey: String = Properties()
-    .also { properties ->
-        val localProperties = rootProject.file("local.properties")
-        if (localProperties.exists()) {
-            localProperties.inputStream().use { properties.load(it) }
-        }
+// API keys for local development. Define them in local.properties (which is git-ignored)
+// or as environment variables. Never commit a real key.
+val localProperties: Properties = Properties().also { properties ->
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use { properties.load(it) }
     }
-    .getProperty("GEMINI_API_KEY")
-    ?: System.getenv("GEMINI_API_KEY")
-    ?: ""
+}
+
+fun localSecret(name: String): String =
+    localProperties.getProperty(name) ?: System.getenv(name) ?: ""
+
+val geminiApiKey: String = localSecret("GEMINI_API_KEY")
+
+// Optional: recipe photos from Unsplash. Without it recipes show their local illustrations.
+val unsplashAccessKey: String = localSecret("UNSPLASH_ACCESS_KEY")
 
 kotlin {
     compilerOptions {
@@ -46,6 +50,7 @@ android {
         versionName = "1.0"
 
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
+        buildConfigField("String", "UNSPLASH_ACCESS_KEY", "\"$unsplashAccessKey\"")
     }
     packaging {
         resources {

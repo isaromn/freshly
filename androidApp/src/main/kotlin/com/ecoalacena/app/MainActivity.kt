@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.ecoalacena.app.data.remote.ai.GeminiConfig
+import com.ecoalacena.app.data.remote.image.UnsplashConfig
 import com.ecoalacena.app.di.initKoin
 import com.ecoalacena.app.presentation.App
 import org.koin.android.ext.koin.androidContext
@@ -19,6 +20,7 @@ class MainActivity : ComponentActivity() {
         if (GlobalContext.getOrNull() == null) {
             initKoin(
                 geminiConfig = GeminiConfig(apiKey = BuildConfig.GEMINI_API_KEY),
+                unsplashConfig = UnsplashConfig(accessKey = BuildConfig.UNSPLASH_ACCESS_KEY),
             ) {
                 androidContext(this@MainActivity)
             }

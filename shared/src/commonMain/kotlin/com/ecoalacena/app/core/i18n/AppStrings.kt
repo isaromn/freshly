@@ -146,6 +146,7 @@ interface AppStrings {
     val stepsTitle: String
     fun stepsProgress(done: Int, total: Int): String
     val allStepsDone: String
+    fun photoCredit(name: String): String
     val showRecipe: String
     val recipesLoadError: String
     val recipeAiFailed: String

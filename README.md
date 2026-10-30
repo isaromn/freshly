@@ -71,17 +71,22 @@ Funciona en **Android**, **iOS** y **Desktop (JVM)** compartiendo la lógica y l
    ```properties
    sdk.dir=/ruta/a/Android/sdk
    GEMINI_API_KEY=tu_clave_aqui
+   # Opcional: fotos de las recetas generadas por IA
+   UNSPLASH_ACCESS_KEY=tu_access_key_de_unsplash
    ```
 
    > ⚠️ `local.properties` está en `.gitignore`. **Nunca subas una clave real al repositorio.**
 
    Cómo lee la clave cada plataforma:
 
-   | Plataforma | Origen de `GEMINI_API_KEY` |
+   | Plataforma | Origen de `GEMINI_API_KEY` y `UNSPLASH_ACCESS_KEY` |
    |---|---|
-   | Android | `local.properties` o variable de entorno → `BuildConfig.GEMINI_API_KEY` |
+   | Android | `local.properties` o variable de entorno → `BuildConfig` |
    | Desktop | Variable de entorno, propiedad del sistema o `local.properties` |
-   | iOS | Clave `GEMINI_API_KEY` en `iosApp/iosApp/Info.plist` (déjala vacía en los commits) |
+   | iOS | Claves en `iosApp/iosApp/Info.plist` (déjalas vacías en los commits) |
+
+   Sin `UNSPLASH_ACCESS_KEY` (se obtiene en [unsplash.com/developers](https://unsplash.com/developers)),
+   cada receta muestra la ilustración local de su categoría.
 
 ## Ejecutar
 

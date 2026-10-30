@@ -5,8 +5,11 @@ import com.ecoalacena.app.data.remote.ai.GeminiConfig
 import com.ecoalacena.app.data.remote.ai.GeminiRecipeService
 import com.ecoalacena.app.data.remote.ai.GeminiVisionService
 import com.ecoalacena.app.data.remote.ai.geminiJson
+import com.ecoalacena.app.data.remote.image.UnsplashConfig
+import com.ecoalacena.app.data.remote.image.UnsplashPhotoFinder
 import com.ecoalacena.app.data.repository.PantryRepositoryImpl
 import com.ecoalacena.app.database.PantryDatabase
+import com.ecoalacena.app.domain.recipe.RecipePhotoFinder
 import com.ecoalacena.app.domain.repository.PantryRepository
 import com.ecoalacena.app.domain.usecase.AnalyzeFoodUseCase
 import com.ecoalacena.app.domain.usecase.CalculateImpactUseCase
@@ -54,7 +57,8 @@ val appModule = module {
 
     // Hybrid recipes: Gemini first, offline templates as a fallback
     single { GeminiRecipeService(httpClient = get(), config = get<GeminiConfig>()) }
-    factory { GetHybridRecipeUseCase(repository = get(), recipeService = get()) }
+    single<RecipePhotoFinder> { UnsplashPhotoFinder(httpClient = get(), config = get<UnsplashConfig>()) }
+    factory { GetHybridRecipeUseCase(repository = get(), recipeService = get(), photoFinder = get()) }
 
     // Impact dashboard (SDG 12)
     factory { CalculateImpactUseCase() }
@@ -71,16 +75,21 @@ val appModule = module {
  *
  * @param geminiConfig API key and model for Gemini, provided by the platform
  * (for example from a BuildConfig field on Android).
+ * @param unsplashConfig access key for recipe photos; an empty key keeps the local illustrations.
  * @param appDeclaration extra platform configuration, e.g. `androidContext(...)` on Android.
  */
 fun initKoin(
     geminiConfig: GeminiConfig,
+    unsplashConfig: UnsplashConfig = UnsplashConfig(accessKey = ""),
     appDeclaration: KoinAppDeclaration = {},
 ): KoinApplication =
     startKoin {
         appDeclaration()
         modules(
-            module { single { geminiConfig } },
+            module {
+                single { geminiConfig }
+                single { unsplashConfig }
+            },
             platformModule,
             appModule,
         )

@@ -9,14 +9,20 @@ import com.ecoalacena.app.data.remote.ai.GeminiRecipeResult
 import com.ecoalacena.app.data.remote.ai.GeminiRecipeService
 import com.ecoalacena.app.domain.model.PantryItem
 import com.ecoalacena.app.domain.model.Recipe
+import com.ecoalacena.app.domain.model.RecipeCategory
 import com.ecoalacena.app.domain.model.RecipeDifficulty
 import com.ecoalacena.app.domain.model.RecipeSource
 import com.ecoalacena.app.domain.recipe.LocalRecipeEngine
+import com.ecoalacena.app.domain.recipe.RecipePhotoFinder
 import com.ecoalacena.app.domain.repository.PantryRepository
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** Thrown when there is nothing usable in the pantry to cook with. */
 class EmptyPantryException : Exception("There are no usable ingredients in the pantry.")
@@ -43,6 +49,8 @@ class GetHybridRecipeUseCase(
     private val repository: PantryRepository,
     private val recipeService: GeminiRecipeService,
     private val localEngine: LocalRecipeEngine = LocalRecipeEngine(),
+    /** Looks for a photo of every recipe; without one (no key, no internet) the illustration stays. */
+    private val photoFinder: RecipePhotoFinder = RecipePhotoFinder.None,
     private val nowMillis: () -> Long = ::currentEpochMillis,
     /** Language of the device, read on every request. */
     private val language: () -> AppLanguage = ::currentLanguage,
@@ -92,8 +100,7 @@ class GetHybridRecipeUseCase(
             ingredientLines = ingredients.map { it.toPromptLine(now) },
             outputLanguage = outputLanguage,
         )
-        // The AI recipe is built around the most urgent item, so it takes that item's category.
-        val aiRecipe = aiResult.getOrNull()?.toRecipeOrNull()?.copy(category = ingredients.first().category)
+        val aiRecipe = aiResult.getOrNull()?.toRecipeOrNull()
 
         val aiFailure = when {
             aiRecipe != null -> null
@@ -104,7 +111,7 @@ class GetHybridRecipeUseCase(
         val localRecipes = localEngine.suggest(ingredients, localLimit, outputLanguage)
 
         return HybridRecipeResult(
-            recipes = listOfNotNull(aiRecipe) + localRecipes,
+            recipes = withPhotos(listOfNotNull(aiRecipe) + localRecipes),
             ingredients = ingredients,
             aiFailure = aiFailure,
         )
@@ -146,8 +153,28 @@ class GetHybridRecipeUseCase(
             prepTimeMinutes = prepTimeMinutes.coerceIn(1, MAX_PREP_MINUTES),
             difficulty = RecipeDifficulty.fromRaw(difficulty),
             source = RecipeSource.IS_AI,
+            category = RecipeCategory.fromRaw(category),
+            imageQuery = imageQuery.trim(),
         )
     }
+
+    /**
+     * Searches the photos of all [recipes] at the same time. A search that fails or takes too long
+     * (for example with no internet) leaves that recipe with its local illustration.
+     */
+    private suspend fun withPhotos(recipes: List<Recipe>): List<Recipe> =
+        coroutineScope {
+            recipes
+                .map { recipe ->
+                    async {
+                        val photo = withTimeoutOrNull(PHOTO_TIMEOUT_MILLIS) {
+                            photoFinder.findPhoto(recipe.imageQuery)
+                        }
+                        if (photo == null) recipe else recipe.copy(imageUrl = photo.url, imageCredit = photo.credit)
+                    }
+                }
+                .awaitAll()
+        }
 
     private companion object {
         const val EXPIRING_WINDOW_DAYS = 3L
@@ -156,5 +183,6 @@ class GetHybridRecipeUseCase(
         const val MAX_PREP_MINUTES = 600
         const val LOCAL_RECIPES_WITH_AI = 2
         const val LOCAL_RECIPES_WITHOUT_AI = 3
+        const val PHOTO_TIMEOUT_MILLIS = 5_000L
     }
 }

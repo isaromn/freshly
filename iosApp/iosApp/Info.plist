@@ -8,5 +8,7 @@
 	<string>EcoAlacena usa la cámara para fotografiar tus productos y recibos del supermercado.</string>
 	<key>GEMINI_API_KEY</key>
 	<string></string>
+	<key>UNSPLASH_ACCESS_KEY</key>
+	<string></string>
 </dict>
 </plist>

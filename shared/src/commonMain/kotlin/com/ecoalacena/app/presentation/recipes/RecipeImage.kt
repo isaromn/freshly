@@ -1,99 +1,109 @@
 package com.ecoalacena.app.presentation.recipes
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.contentColorFor
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.ecoalacena.app.domain.model.Category
 import com.ecoalacena.app.domain.model.Recipe
-import com.ecoalacena.app.presentation.util.icon
+import com.ecoalacena.app.domain.model.RecipeCategory
+import com.ecoalacena.app.presentation.i18n.LocalAppStrings
+import ecoalacenakmp.shared.generated.resources.Res
+import ecoalacenakmp.shared.generated.resources.recipe_dessert
+import ecoalacenakmp.shared.generated.resources.recipe_drink
+import ecoalacenakmp.shared.generated.resources.recipe_eggs
+import ecoalacenakmp.shared.generated.resources.recipe_meat
+import ecoalacenakmp.shared.generated.resources.recipe_other
+import ecoalacenakmp.shared.generated.resources.recipe_pasta
+import ecoalacenakmp.shared.generated.resources.recipe_rice
+import ecoalacenakmp.shared.generated.resources.recipe_salad
+import ecoalacenakmp.shared.generated.resources.recipe_sandwich
+import ecoalacenakmp.shared.generated.resources.recipe_soup
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+
+/** Local illustration of each kind of dish, used offline and whenever a recipe has no photo. */
+fun getOfflineRecipeImage(category: RecipeCategory): DrawableResource =
+    when (category) {
+        RecipeCategory.SOUP -> Res.drawable.recipe_soup
+        RecipeCategory.SALAD -> Res.drawable.recipe_salad
+        RecipeCategory.PASTA -> Res.drawable.recipe_pasta
+        RecipeCategory.RICE -> Res.drawable.recipe_rice
+        RecipeCategory.MEAT -> Res.drawable.recipe_meat
+        RecipeCategory.EGGS -> Res.drawable.recipe_eggs
+        RecipeCategory.SANDWICH -> Res.drawable.recipe_sandwich
+        RecipeCategory.DRINK -> Res.drawable.recipe_drink
+        RecipeCategory.DESSERT -> Res.drawable.recipe_dessert
+        RecipeCategory.OTHER -> Res.drawable.recipe_other
+    }
 
 /**
- * Header picture of a recipe. Every recipe gets an illustration drawn from its category (colors
- * and icon from the theme, so it works offline and in dark mode). When the recipe has an
- * [Recipe.imageUrl], the photo is loaded on top of it; while it loads, or if it fails, the
- * illustration stays visible.
+ * Header picture of a recipe. The photo at [Recipe.imageUrl] is loaded with Coil; the local
+ * illustration of the category is shown while it loads, when it fails (for example with no
+ * internet) and when there is no URL at all, so the header is never empty or broken.
  */
 @Composable
 internal fun RecipeHeaderImage(
     recipe: Recipe,
     modifier: Modifier = Modifier,
 ) {
-    val (container, accent) = recipe.category.headerColors()
+    val illustration = painterResource(getOfflineRecipeImage(recipe.category))
+    // The credit only makes sense over the real photo, not over the illustration.
+    var photoShown by remember(recipe.imageUrl) { mutableStateOf(false) }
 
-    Box(
-        modifier = modifier
-            .clipToBounds()
-            .background(Brush.linearGradient(listOf(container, accent.copy(alpha = 0.55f)))),
-        contentAlignment = Alignment.Center,
-    ) {
-        val icon = recipe.category.icon
-        val tint = MaterialTheme.colorScheme.contentColorFor(container)
-
-        // Two big, faded copies of the icon in the corners, and a solid one in the middle.
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = tint.copy(alpha = 0.12f),
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .offset(x = (-24).dp, y = (-24).dp)
-                .size(140.dp)
-                .rotate(-20f),
-        )
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = tint.copy(alpha = 0.12f),
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .offset(x = 28.dp, y = 28.dp)
-                .size(160.dp)
-                .rotate(15f),
-        )
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = tint.copy(alpha = 0.85f),
-            modifier = Modifier.size(64.dp),
+    Box(modifier = modifier) {
+        AsyncImage(
+            model = recipe.imageUrl,
+            contentDescription = recipe.title,
+            placeholder = illustration,
+            error = illustration,
+            fallback = illustration,
+            contentScale = ContentScale.Crop,
+            onSuccess = { photoShown = true },
+            onError = { photoShown = false },
+            modifier = Modifier.fillMaxSize(),
         )
 
-        recipe.imageUrl?.let { url ->
-            AsyncImage(
-                model = url,
-                contentDescription = recipe.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
+        val credit = recipe.imageCredit
+        if (photoShown && credit != null) {
+            PhotoCredit(
+                name = credit,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(8.dp),
             )
         }
     }
 }
 
-/** Background and accent of the illustration, taken from the theme so both modes look right. */
+/** "Photo by … on Unsplash", required by the Unsplash API guidelines. */
 @Composable
-private fun Category.headerColors(): Pair<Color, Color> {
-    val colors = MaterialTheme.colorScheme
-    return when (this) {
-        Category.FRUITS_VEGETABLES -> colors.primaryContainer to colors.primary
-        Category.DAIRY -> colors.secondaryContainer to colors.secondary
-        Category.MEAT_FISH -> colors.errorContainer to colors.error
-        Category.BAKERY -> colors.tertiaryContainer to colors.tertiary
-        Category.BEVERAGES -> colors.secondaryContainer to colors.primary
-        Category.PANTRY_STAPLE -> colors.tertiaryContainer to colors.secondary
-        Category.OTHER -> colors.surfaceContainerHighest to colors.primary
+private fun PhotoCredit(name: String, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.small,
+        color = Color.Black.copy(alpha = 0.55f),
+        contentColor = Color.White,
+    ) {
+        Text(
+            text = LocalAppStrings.current.photoCredit(name),
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+        )
     }
 }

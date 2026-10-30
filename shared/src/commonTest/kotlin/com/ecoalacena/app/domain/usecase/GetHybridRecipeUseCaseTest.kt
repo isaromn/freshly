@@ -7,7 +7,10 @@ import com.ecoalacena.app.data.remote.ai.GeminiException
 import com.ecoalacena.app.data.remote.ai.GeminiRecipeService
 import com.ecoalacena.app.data.remote.ai.geminiJson
 import com.ecoalacena.app.domain.model.PantryItem
+import com.ecoalacena.app.domain.model.RecipeCategory
 import com.ecoalacena.app.domain.model.RecipeSource
+import com.ecoalacena.app.domain.recipe.RecipePhoto
+import com.ecoalacena.app.domain.recipe.RecipePhotoFinder
 import com.ecoalacena.app.testing.FakePantryRepository
 import com.ecoalacena.app.testing.TEST_NOW
 import com.ecoalacena.app.testing.testItem
@@ -27,6 +30,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 
 class GetHybridRecipeUseCaseTest {
@@ -49,6 +53,78 @@ class GetHybridRecipeUseCaseTest {
         assertNull(result.aiFailure)
         // Most urgent ingredient first.
         assertEquals(listOf("Manzanas", "Zanahoria"), result.ingredients.map { it.name })
+    }
+
+    @Test
+    fun aiRecipeGetsItsDishCategoryAndAPhotoFromTheSearchText() = runTest {
+        val useCase = useCaseFor(
+            testItem("carrot", "Zanahoria", expiresInDays = 2),
+            photoFinder = { query -> RecipePhoto(url = "https://images.example/$query.jpg", credit = "Ana Pérez") },
+        )
+
+        val aiRecipe = useCase().getOrThrow().recipes.first()
+
+        assertEquals(RecipeCategory.SOUP, aiRecipe.category)
+        assertEquals("https://images.example/carrot soup.jpg", aiRecipe.imageUrl)
+        assertEquals("Ana Pérez", aiRecipe.imageCredit)
+    }
+
+    @Test
+    fun offlineRecipesAlsoGetAPhotoWhenThereIsInternet() = runTest {
+        val searched = mutableListOf<String>()
+        val useCase = useCaseFor(
+            testItem("carrot", "Zanahoria", expiresInDays = 2),
+            status = HttpStatusCode.InternalServerError,
+            photoFinder = { query ->
+                searched += query
+                RecipePhoto(url = "https://images.example/$query.jpg", credit = "Ana Pérez")
+            },
+        )
+
+        val recipes = useCase().getOrThrow().recipes
+
+        assertTrue(recipes.all { it.source == RecipeSource.OFFLINE })
+        assertTrue("vegetable soup" in searched)
+        assertEquals("https://images.example/vegetable soup.jpg", recipes.first { it.id == "local-vegetable-soup" }.imageUrl)
+    }
+
+    @Test
+    fun aSlowPhotoSearchDoesNotHoldTheRecipesBack() = runTest {
+        val useCase = useCaseFor(
+            testItem("carrot", "Zanahoria", expiresInDays = 2),
+            photoFinder = {
+                delay(60_000)
+                RecipePhoto(url = "https://images.example/late.jpg", credit = "Ana Pérez")
+            },
+        )
+
+        val recipes = useCase().getOrThrow().recipes
+
+        assertTrue(recipes.isNotEmpty())
+        assertTrue(recipes.all { it.imageUrl == null })
+    }
+
+    @Test
+    fun withoutAPhotoTheRecipesKeepTheirLocalIllustration() = runTest {
+        val useCase = useCaseFor(testItem("carrot", "Zanahoria", expiresInDays = 2))
+
+        val recipes = useCase().getOrThrow().recipes
+
+        assertTrue(recipes.all { it.imageUrl == null && it.imageCredit == null })
+    }
+
+    @Test
+    fun asksGeminiForTheDishCategoryAndAPhotoSearchText() = runTest {
+        var requestBody = ""
+        val useCase = useCaseFor(
+            testItem("carrot", "Zanahoria", expiresInDays = 2),
+            onRequest = { requestBody = it },
+        )
+
+        useCase()
+
+        assertTrue("imageQuery" in requestBody)
+        assertTrue("category" in requestBody)
     }
 
     @Test
@@ -159,6 +235,7 @@ class GetHybridRecipeUseCaseTest {
         apiKey: String = "test-key",
         language: () -> AppLanguage = ::currentLanguage,
         onRequest: (String) -> Unit = {},
+        photoFinder: RecipePhotoFinder = RecipePhotoFinder.None,
     ): GetHybridRecipeUseCase {
         val engine = MockEngine { request ->
             onRequest(request.bodyText())
@@ -177,6 +254,7 @@ class GetHybridRecipeUseCaseTest {
             recipeService = GeminiRecipeService(client, GeminiConfig(apiKey = apiKey)),
             nowMillis = { TEST_NOW },
             language = language,
+            photoFinder = photoFinder,
         )
     }
 
@@ -196,6 +274,7 @@ class GetHybridRecipeUseCaseTest {
     private companion object {
         const val AI_RECIPE_JSON =
             """{"title":"Sopa de zanahoria","ingredients":["2 zanahorias"],""" +
-                """"steps":["Cortar","Hervir","Servir"],"prepTimeMinutes":25,"difficulty":"EASY"}"""
+                """"steps":["Cortar","Hervir","Servir"],"prepTimeMinutes":25,"difficulty":"EASY",""" +
+                """"category":"SOUP","imageQuery":"carrot soup"}"""
     }
 }

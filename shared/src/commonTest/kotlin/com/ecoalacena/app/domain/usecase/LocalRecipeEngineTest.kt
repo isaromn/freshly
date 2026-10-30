@@ -1,7 +1,7 @@
 package com.ecoalacena.app.domain.usecase
 
 import com.ecoalacena.app.core.i18n.AppLanguage
-import com.ecoalacena.app.domain.model.Category
+import com.ecoalacena.app.domain.model.RecipeCategory
 import com.ecoalacena.app.domain.model.RecipeSource
 import com.ecoalacena.app.domain.recipe.LocalRecipeEngine
 import com.ecoalacena.app.testing.testItem
@@ -38,18 +38,20 @@ class LocalRecipeEngineTest {
     }
 
     @Test
-    fun recipeTakesTheCategoryOfItsMainIngredientAndHasNoPhoto() {
-        val recipes = engine.suggest(
-            listOf(
-                testItem("1", "Zanahoria", category = Category.FRUITS_VEGETABLES),
-                testItem("2", "Cebolla", category = Category.FRUITS_VEGETABLES),
-            ),
-        )
+    fun offlineRecipesHaveADishCategoryAndNoPhoto() {
+        val recipes = engine.suggest(listOf(testItem("1", "Zanahoria"), testItem("2", "Cebolla")))
 
         val soup = recipes.first { it.title == "Sopa casera de verduras" }
 
-        assertEquals(Category.FRUITS_VEGETABLES, soup.category)
+        assertEquals(RecipeCategory.SOUP, soup.category)
         assertNull(soup.imageUrl)
+    }
+
+    @Test
+    fun genericRecipeUsesTheOtherCategory() {
+        val recipe = engine.suggest(listOf(testItem("1", "Chocolatina"))).single()
+
+        assertEquals(RecipeCategory.OTHER, recipe.category)
     }
 
     @Test

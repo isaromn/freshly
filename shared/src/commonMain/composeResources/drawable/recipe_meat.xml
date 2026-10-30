@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Offline illustration for meat recipes. Generated from the Material icon of the category. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="160dp"
+    android:viewportWidth="320"
+    android:viewportHeight="160">
+    <path
+        android:fillColor="#A2574A"
+        android:pathData="M0,0 H320 V160 H0 Z" />
+    <path
+        android:fillColor="#000000"
+        android:fillAlpha="0.12"
+        android:pathData="M0,110 C80,90 200,150 320,100 V160 H0 Z" />
+    <group
+        android:pivotX="12"
+        android:pivotY="12"
+        android:rotation="-20"
+        android:scaleX="6"
+        android:scaleY="6"
+        android:translateX="28"
+        android:translateY="18">
+        <path
+            android:fillColor="#FFFFFF"
+            android:fillAlpha="0.12"
+            android:pathData="M7.75,8 H11 v5 H7.75 v1 H8.5 c1.38,0 2.5,1.12 2.5,2.5 c0,1.38 -1.12,2.5 -2.5,2.5 H7.75 v4 h-1.5 v-4 H5.5 C4.12,19 3,17.88 3,16.5 C3,15.12 4.12,14 5.5,14 h0.75 v-1 H3 V8 h3.25 V7 H5.5 C4.12,7 3,5.88 3,4.5 C3,3.12 4.12,2 5.5,2 h0.75 V1 h1.5 v1 H8.5 C9.88,2 11,3.12 11,4.5 C11,5.88 9.88,7 8.5,7 H7.75 V8 Z M17.75,7 h0.75 C19.88,7 21,5.88 21,4.5 C21,3.12 19.88,2 18.5,2 h-0.75 V1 h-1.5 v1 H15.5 C14.12,2 13,3.12 13,4.5 C13,5.88 14.12,7 15.5,7 h0.75 v1 H13 v5 h3.25 v1 H15.5 c-1.38,0 -2.5,1.12 -2.5,2.5 c0,1.38 1.12,2.5 2.5,2.5 h0.75 v4 h1.5 v-4 h0.75 c1.38,0 2.5,-1.12 2.5,-2.5 c0,-1.38 -1.12,-2.5 -2.5,-2.5 h-0.75 v-1 H21 V8 h-3.25 V7 Z" />
+    </group>
+    <group
+        android:pivotX="12"
+        android:pivotY="12"
+        android:rotation="15"
+        android:scaleX="6.5"
+        android:scaleY="6.5"
+        android:translateX="273"
+        android:translateY="118">
+        <path
+            android:fillColor="#FFFFFF"
+            android:fillAlpha="0.12"
+            android:pathData="M7.75,8 H11 v5 H7.75 v1 H8.5 c1.38,0 2.5,1.12 2.5,2.5 c0,1.38 -1.12,2.5 -2.5,2.5 H7.75 v4 h-1.5 v-4 H5.5 C4.12,19 3,17.88 3,16.5 C3,15.12 4.12,14 5.5,14 h0.75 v-1 H3 V8 h3.25 V7 H5.5 C4.12,7 3,5.88 3,4.5 C3,3.12 4.12,2 5.5,2 h0.75 V1 h1.5 v1 H8.5 C9.88,2 11,3.12 11,4.5 C11,5.88 9.88,7 8.5,7 H7.75 V8 Z M17.75,7 h0.75 C19.88,7 21,5.88 21,4.5 C21,3.12 19.88,2 18.5,2 h-0.75 V1 h-1.5 v1 H15.5 C14.12,2 13,3.12 13,4.5 C13,5.88 14.12,7 15.5,7 h0.75 v1 H13 v5 h3.25 v1 H15.5 c-1.38,0 -2.5,1.12 -2.5,2.5 c0,1.38 1.12,2.5 2.5,2.5 h0.75 v4 h1.5 v-4 h0.75 c1.38,0 2.5,-1.12 2.5,-2.5 c0,-1.38 -1.12,-2.5 -2.5,-2.5 h-0.75 v-1 H21 V8 h-3.25 V7 Z" />
+    </group>
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.18"
+        android:pathData="M160,80 m-46,0 a46,46 0 1,0 92,0 a46,46 0 1,0 -92,0" />
+    <group
+        android:pivotX="12"
+        android:pivotY="12"
+        android:rotation="0"
+        android:scaleX="2.6"
+        android:scaleY="2.6"
+        android:translateX="148"
+        android:translateY="68">
+        <path
+            android:fillColor="#FFFFFF"
+            android:fillAlpha="0.95"
+            android:pathData="M7.75,8 H11 v5 H7.75 v1 H8.5 c1.38,0 2.5,1.12 2.5,2.5 c0,1.38 -1.12,2.5 -2.5,2.5 H7.75 v4 h-1.5 v-4 H5.5 C4.12,19 3,17.88 3,16.5 C3,15.12 4.12,14 5.5,14 h0.75 v-1 H3 V8 h3.25 V7 H5.5 C4.12,7 3,5.88 3,4.5 C3,3.12 4.12,2 5.5,2 h0.75 V1 h1.5 v1 H8.5 C9.88,2 11,3.12 11,4.5 C11,5.88 9.88,7 8.5,7 H7.75 V8 Z M17.75,7 h0.75 C19.88,7 21,5.88 21,4.5 C21,3.12 19.88,2 18.5,2 h-0.75 V1 h-1.5 v1 H15.5 C14.12,2 13,3.12 13,4.5 C13,5.88 14.12,7 15.5,7 h0.75 v1 H13 v5 h3.25 v1 H15.5 c-1.38,0 -2.5,1.12 -2.5,2.5 c0,1.38 1.12,2.5 2.5,2.5 h0.75 v4 h1.5 v-4 h0.75 c1.38,0 2.5,-1.12 2.5,-2.5 c0,-1.38 -1.12,-2.5 -2.5,-2.5 h-0.75 v-1 H21 V8 h-3.25 V7 Z" />
+    </group>
+</vector>

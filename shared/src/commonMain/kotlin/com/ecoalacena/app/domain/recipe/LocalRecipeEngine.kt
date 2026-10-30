@@ -4,6 +4,7 @@ import com.ecoalacena.app.core.i18n.AppLanguage
 import com.ecoalacena.app.core.i18n.currentLanguage
 import com.ecoalacena.app.domain.model.PantryItem
 import com.ecoalacena.app.domain.model.Recipe
+import com.ecoalacena.app.domain.model.RecipeCategory
 import com.ecoalacena.app.domain.model.RecipeDifficulty
 import com.ecoalacena.app.domain.model.RecipeSource
 import com.ecoalacena.app.domain.model.amountText
@@ -63,7 +64,8 @@ class LocalRecipeEngine(
             prepTimeMinutes = 20,
             difficulty = RecipeDifficulty.EASY,
             source = RecipeSource.OFFLINE,
-            category = ingredients.first().category,
+            category = RecipeCategory.OTHER,
+            imageQuery = "vegetable stir fry",
         )
     }
 
@@ -88,7 +90,8 @@ class LocalRecipeEngine(
                 prepTimeMinutes = template.prepTimeMinutes,
                 difficulty = template.difficulty,
                 source = RecipeSource.OFFLINE,
-                category = items.first().category,
+                category = template.category,
+                imageQuery = template.imageQuery,
             )
         }
     }
@@ -103,6 +106,9 @@ class LocalRecipeEngine(
         val en: RecipeText,
         val prepTimeMinutes: Int,
         val difficulty: RecipeDifficulty,
+        val category: RecipeCategory,
+        /** English words to search a photo of the dish when there is internet. */
+        val imageQuery: String,
     ) {
         fun text(outputLanguage: AppLanguage): RecipeText =
             when (outputLanguage) {
@@ -182,6 +188,8 @@ class LocalRecipeEngine(
         val TEMPLATES = listOf(
             RecipeTemplate(
                 id = "vegetable-soup",
+                category = RecipeCategory.SOUP,
+                imageQuery = "vegetable soup",
                 keywords = VEGETABLES,
                 es = RecipeText(
                     title = "Sopa casera de verduras",
@@ -218,6 +226,8 @@ class LocalRecipeEngine(
             ),
             RecipeTemplate(
                 id = "fruit-salad",
+                category = RecipeCategory.SALAD,
+                imageQuery = "fruit salad",
                 keywords = FRUITS,
                 es = RecipeText(
                     title = "Ensalada de frutas",
@@ -252,6 +262,8 @@ class LocalRecipeEngine(
             ),
             RecipeTemplate(
                 id = "egg-scramble",
+                category = RecipeCategory.EGGS,
+                imageQuery = "scrambled eggs vegetables",
                 keywords = VEGETABLES + setOf("huevo", "queso", "jamon", "egg", "cheese", "ham"),
                 required = setOf("huevo", "egg"),
                 es = RecipeText(
@@ -285,6 +297,8 @@ class LocalRecipeEngine(
             ),
             RecipeTemplate(
                 id = "creamy-smoothie",
+                category = RecipeCategory.DRINK,
+                imageQuery = "fruit smoothie",
                 keywords = FRUITS + setOf("leche", "yogur", "yogurt", "avena", "milk", "yoghurt", "oat", "oatmeal"),
                 required = setOf("leche", "yogur", "yogurt", "milk", "yoghurt"),
                 es = RecipeText(
@@ -318,6 +332,8 @@ class LocalRecipeEngine(
             ),
             RecipeTemplate(
                 id = "fried-rice",
+                category = RecipeCategory.RICE,
+                imageQuery = "fried rice",
                 keywords = VEGETABLES + PROTEINS + setOf("arroz", "huevo", "rice", "egg"),
                 required = setOf("arroz", "rice"),
                 es = RecipeText(
@@ -355,6 +371,8 @@ class LocalRecipeEngine(
             ),
             RecipeTemplate(
                 id = "tomato-pasta",
+                category = RecipeCategory.PASTA,
+                imageQuery = "pasta tomato sauce",
                 keywords = VEGETABLES + setOf(
                     "pasta", "espagueti", "spaghetti", "queso", "ajo", "albahaca", "cheese", "garlic", "basil",
                 ),
@@ -390,6 +408,8 @@ class LocalRecipeEngine(
             ),
             RecipeTemplate(
                 id = "toasted-sandwich",
+                category = RecipeCategory.SANDWICH,
+                imageQuery = "toasted sandwich",
                 keywords = setOf(
                     "pan", "queso", "jamon", "tomate", "aguacate", "huevo", "lechuga", "pollo",
                     "bread", "cheese", "ham", "tomato", "avocado", "egg", "lettuce", "chicken",
@@ -420,6 +440,8 @@ class LocalRecipeEngine(
             ),
             RecipeTemplate(
                 id = "home-stew",
+                category = RecipeCategory.SOUP,
+                imageQuery = "vegetable stew",
                 keywords = VEGETABLES + PROTEINS,
                 required = PROTEINS,
                 es = RecipeText(
