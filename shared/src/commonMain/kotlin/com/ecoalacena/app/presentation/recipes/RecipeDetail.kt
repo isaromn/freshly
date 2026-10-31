@@ -22,7 +22,9 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -59,6 +61,7 @@ internal fun RecipeDetail(
     recipe: Recipe,
     completedSteps: Set<Int>,
     onToggleStep: (Int) -> Unit,
+    onFinish: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -103,7 +106,7 @@ internal fun RecipeDetail(
                         contentPadding = PaddingValues(end = 24.dp, bottom = 24.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        recipeSteps(recipe, completedSteps, onToggleStep)
+                        recipeSteps(recipe, completedSteps, onToggleStep, onFinish)
                     }
                 }
             } else {
@@ -118,7 +121,7 @@ internal fun RecipeDetail(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     recipeOverview(recipe)
-                    recipeSteps(recipe, completedSteps, onToggleStep)
+                    recipeSteps(recipe, completedSteps, onToggleStep, onFinish)
                 }
             }
         }
@@ -161,11 +164,12 @@ private fun LazyListScope.recipeOverview(recipe: Recipe) {
     }
 }
 
-/** Overall progress and the checklist of steps. */
+/** Overall progress, the checklist of steps and the button to finish the recipe. */
 private fun LazyListScope.recipeSteps(
     recipe: Recipe,
     completedSteps: Set<Int>,
     onToggleStep: (Int) -> Unit,
+    onFinish: () -> Unit,
 ) {
     item(key = "progress") {
         StepsProgress(done = completedSteps.size, total = recipe.steps.size)
@@ -178,6 +182,21 @@ private fun LazyListScope.recipeSteps(
             done = index in completedSteps,
             onToggle = { onToggleStep(index) },
         )
+    }
+
+    // Ticking off the last step also finishes the recipe; the button is there for anyone who
+    // cooked without ticking every step.
+    item(key = "finish") {
+        Button(
+            onClick = onFinish,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+        ) {
+            Icon(Icons.Filled.Restaurant, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text(LocalAppStrings.current.finishRecipe)
+        }
     }
 }
 

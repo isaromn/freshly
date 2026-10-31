@@ -49,6 +49,7 @@ import com.ecoalacena.app.core.MILLIS_PER_DAY
 import com.ecoalacena.app.core.startOfDayUtc
 import com.ecoalacena.app.presentation.i18n.LocalAppStrings
 import com.ecoalacena.app.presentation.util.formatQuantity
+import com.ecoalacena.app.presentation.util.quantityStep
 
 /** Size of the small +/- buttons, so the controls fit inside a product card on a phone. */
 private val SMALL_BUTTON_SIZE = 36.dp
@@ -242,14 +243,6 @@ internal fun EditableQuantity(
         }
     }
 }
-
-/** How much the -/+ buttons change a quantity: grams and milliliters move in larger steps. */
-private fun quantityStep(unitCode: String): Double =
-    when (unitCode.lowercase()) {
-        "g", "ml" -> 50.0
-        "kg", "l" -> 0.5
-        else -> 1.0
-    }
 
 /**
  * Expiration date of a scanned product: a click on the date opens a calendar to pick the exact

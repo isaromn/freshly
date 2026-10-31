@@ -26,8 +26,11 @@ interface PantryRepository {
     suspend fun deleteById(id: String)
 
     /**
-     * Removes [item] from the pantry because it was eaten. If it was still fresh and its
-     * weight can be estimated, the weight is added to the "waste avoided" total.
+     * Records that [quantity] of [item] was eaten (all of it by default). The item is removed when
+     * nothing is left, otherwise its quantity goes down. If it was still fresh and the weight of the
+     * eaten part can be estimated, that weight is added to the "waste avoided" total.
+     *
+     * @return the kilograms added to the "waste avoided" total (0 when nothing was counted).
      */
-    suspend fun markConsumed(item: PantryItem, consumedAtMillis: Long)
+    suspend fun markConsumed(item: PantryItem, consumedAtMillis: Long, quantity: Double = item.quantity): Double
 }

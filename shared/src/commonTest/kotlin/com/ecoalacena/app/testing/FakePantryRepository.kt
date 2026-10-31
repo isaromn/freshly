@@ -56,13 +56,16 @@ class FakePantryRepository(initialItems: List<PantryItem> = emptyList()) : Pantr
         items.value = items.value.filterNot { it.id == id }
     }
 
-    override suspend fun markConsumed(item: PantryItem, consumedAtMillis: Long) {
-        items.value = items.value.filterNot { it.id == item.id }
+    override suspend fun markConsumed(item: PantryItem, consumedAtMillis: Long, quantity: Double): Double {
+        val eaten = quantity.coerceIn(0.0, item.quantity)
+        val remaining = item.quantity - eaten
+        items.value = items.value.filterNot { it.id == item.id } +
+            listOfNotNull(item.copy(quantity = remaining).takeIf { remaining > 1e-6 })
 
-        val weightKg = item.estimatedWeightKg()
+        val weightKg = item.copy(quantity = eaten).estimatedWeightKg()
         val wasExpired = item.expirationDate?.let { it < consumedAtMillis } ?: false
-        if (weightKg != null && !wasExpired) {
-            savedKg.value += weightKg
-        }
+        if (weightKg == null || weightKg <= 0.0 || wasExpired) return 0.0
+        savedKg.value += weightKg
+        return weightKg
     }
 }

@@ -1,5 +1,7 @@
 package com.ecoalacena.app.presentation.util
 
+import com.ecoalacena.app.core.i18n.AppLanguage
+import com.ecoalacena.app.core.i18n.AppStrings
 import kotlin.math.abs
 import kotlin.math.roundToLong
 
@@ -40,3 +42,14 @@ fun formatGrouped(value: Long, separator: Char = '.'): String {
 
     return if (value < 0) "-$grouped" else grouped
 }
+
+/** Thousands separator of the language: "45.000" in Spanish, "45,000" in English. */
+internal fun AppStrings.groupSeparator(): Char = if (language == AppLanguage.ES) '.' else ','
+
+/** How much the -/+ buttons change a quantity: grams and milliliters move in larger steps. */
+internal fun quantityStep(unitCode: String): Double =
+    when (unitCode.lowercase()) {
+        "g", "ml" -> 50.0
+        "kg", "l" -> 0.5
+        else -> 1.0
+    }

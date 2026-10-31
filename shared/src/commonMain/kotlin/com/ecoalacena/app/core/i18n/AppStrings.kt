@@ -149,6 +149,17 @@ interface AppStrings {
     fun stepsProgress(done: Int, total: Int): String
     val allStepsDone: String
     fun photoCredit(name: String): String
+    val finishRecipe: String
+    val completionTitle: String
+    val completionQuestion: String
+    val completionNoPantryItems: String
+    fun inPantry(amount: String): String
+    val discountFromPantry: String
+    val notNow: String
+    val completionDoneTitle: String
+    val completionFoodSaved: String
+    val completionNothingCounted: String
+    val completionDone: String
     val showRecipe: String
     val recipesLoadError: String
     val recipeAiFailed: String

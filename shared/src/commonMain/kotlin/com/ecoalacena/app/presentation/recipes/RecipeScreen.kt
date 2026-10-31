@@ -75,9 +75,11 @@ private fun RecipeContent(
             recipe = selectedRecipe,
             completedSteps = state.completedStepsOf(selectedRecipe.id),
             onToggleStep = { index -> onIntent(RecipeIntent.ToggleStep(selectedRecipe.id, index)) },
+            onFinish = { onIntent(RecipeIntent.FinishRecipe(selectedRecipe.id)) },
             onBack = { onIntent(RecipeIntent.CloseRecipe) },
             modifier = modifier,
         )
+        state.completion?.let { completion -> RecipeCompletionSheet(completion = completion, onIntent = onIntent) }
         return
     }
 

@@ -5,6 +5,7 @@ import com.ecoalacena.app.core.i18n.SpanishStrings
 import com.ecoalacena.app.data.remote.ai.GeminiConfig
 import com.ecoalacena.app.data.remote.ai.GeminiRecipeService
 import com.ecoalacena.app.domain.model.RecipeSource
+import com.ecoalacena.app.domain.usecase.ConsumeRecipeIngredientsUseCase
 import com.ecoalacena.app.domain.usecase.GetHybridRecipeUseCase
 import com.ecoalacena.app.testing.FakePantryRepository
 import com.ecoalacena.app.testing.TEST_NOW
@@ -105,6 +106,97 @@ class RecipeViewModelTest {
     }
 
     @Test
+    fun tickingOffTheLastStepOffersThePantryItemsTheRecipeUsed() {
+        val repository = FakePantryRepository(listOf(carrot, onion))
+        val viewModel = viewModelFor(repository)
+        viewModel.onIntent(RecipeIntent.Refresh)
+        val soup = viewModel.state.value.recipes.first { it.id == "local-vegetable-soup" }
+        viewModel.onIntent(RecipeIntent.OpenRecipe(soup.id))
+
+        soup.steps.indices.forEach { viewModel.onIntent(RecipeIntent.ToggleStep(soup.id, it)) }
+
+        val completion = viewModel.state.value.completion
+        assertEquals(CompletionPhase.SELECTING, completion?.phase)
+        assertEquals(setOf("carrot", "onion"), completion?.ingredients?.map { it.item.id }?.toSet())
+        assertTrue(completion?.ingredients.orEmpty().all { it.selected && it.quantity == it.item.quantity })
+    }
+
+    @Test
+    fun discountingTakesOnlyTheSelectedAmountsOutOfThePantry() {
+        val repository = FakePantryRepository(listOf(carrot, onion))
+        val viewModel = viewModelFor(repository)
+        viewModel.onIntent(RecipeIntent.Refresh)
+        viewModel.onIntent(RecipeIntent.FinishRecipe("local-vegetable-soup"))
+
+        viewModel.onIntent(RecipeIntent.ToggleCompletionIngredient("onion"))
+        viewModel.onIntent(RecipeIntent.SetCompletionQuantity("carrot", 0.5))
+        viewModel.onIntent(RecipeIntent.ConfirmCompletion)
+
+        val completion = viewModel.state.value.completion
+        assertEquals(CompletionPhase.CELEBRATING, completion?.phase)
+        assertEquals(0.5, completion?.impact?.savedKg)
+        // Half the carrots are left; the onion was not used.
+        assertEquals(0.5, repository.items.value.first { it.id == "carrot" }.quantity)
+        assertEquals(1.0, repository.items.value.first { it.id == "onion" }.quantity)
+        // The impact dashboard reads this total, so it updates on its own.
+        assertEquals(0.5, repository.savedKg.value)
+    }
+
+    @Test
+    fun usingAllOfAnIngredientRemovesItFromThePantry() {
+        val repository = FakePantryRepository(listOf(carrot, onion))
+        val viewModel = viewModelFor(repository)
+        viewModel.onIntent(RecipeIntent.Refresh)
+        viewModel.onIntent(RecipeIntent.FinishRecipe("local-vegetable-soup"))
+
+        viewModel.onIntent(RecipeIntent.ConfirmCompletion)
+
+        assertTrue(repository.items.value.isEmpty())
+        assertEquals(2.0, repository.savedKg.value)
+    }
+
+    @Test
+    fun quantityCannotGoAboveWhatIsInThePantry() {
+        val viewModel = viewModelFor(FakePantryRepository(listOf(carrot, onion)))
+        viewModel.onIntent(RecipeIntent.Refresh)
+        viewModel.onIntent(RecipeIntent.FinishRecipe("local-vegetable-soup"))
+
+        viewModel.onIntent(RecipeIntent.SetCompletionQuantity("carrot", 99.0))
+
+        val carrotUse = viewModel.state.value.completion?.ingredients?.first { it.item.id == "carrot" }
+        assertEquals(1.0, carrotUse?.quantity)
+    }
+
+    @Test
+    fun closingAfterTheCelebrationGoesBackToTheList() {
+        val viewModel = viewModelFor(FakePantryRepository(listOf(carrot, onion)))
+        viewModel.onIntent(RecipeIntent.Refresh)
+        viewModel.onIntent(RecipeIntent.OpenRecipe("local-vegetable-soup"))
+        viewModel.onIntent(RecipeIntent.FinishRecipe("local-vegetable-soup"))
+        viewModel.onIntent(RecipeIntent.ConfirmCompletion)
+
+        viewModel.onIntent(RecipeIntent.DismissCompletion)
+
+        assertNull(viewModel.state.value.completion)
+        assertNull(viewModel.state.value.selectedRecipe)
+    }
+
+    @Test
+    fun notNowKeepsThePantryAndTheRecipeOpen() {
+        val repository = FakePantryRepository(listOf(carrot, onion))
+        val viewModel = viewModelFor(repository)
+        viewModel.onIntent(RecipeIntent.Refresh)
+        viewModel.onIntent(RecipeIntent.OpenRecipe("local-vegetable-soup"))
+        viewModel.onIntent(RecipeIntent.FinishRecipe("local-vegetable-soup"))
+
+        viewModel.onIntent(RecipeIntent.DismissCompletion)
+
+        assertNull(viewModel.state.value.completion)
+        assertEquals("local-vegetable-soup", viewModel.state.value.selectedRecipe?.id)
+        assertEquals(2, repository.items.value.size)
+    }
+
+    @Test
     fun stepOutsideTheRecipeIsIgnored() {
         val viewModel = viewModelFor(FakePantryRepository(listOf(testItem("1", "Zanahoria", expiresInDays = 2))))
         viewModel.onIntent(RecipeIntent.Refresh)
@@ -149,6 +241,9 @@ class RecipeViewModelTest {
         assertEquals(listOf("huevos"), spanish.state.value.usedIngredients)
     }
 
+    private val carrot = testItem("carrot", "Zanahoria", expiresInDays = 2)
+    private val onion = testItem("onion", "Cebolla", expiresInDays = 3)
+
     private fun viewModelFor(
         repository: FakePantryRepository,
         language: () -> AppLanguage = { AppLanguage.ES },
@@ -160,6 +255,12 @@ class RecipeViewModelTest {
             recipeService = GeminiRecipeService(client, GeminiConfig(apiKey = "")),
             nowMillis = { TEST_NOW },
         )
-        return RecipeViewModel(getRecipes = useCase, strings = { SpanishStrings }, language = language)
+        return RecipeViewModel(
+            getRecipes = useCase,
+            repository = repository,
+            consumeIngredients = ConsumeRecipeIngredientsUseCase(repository, nowMillis = { TEST_NOW }),
+            strings = { SpanishStrings },
+            language = language,
+        )
     }
 }

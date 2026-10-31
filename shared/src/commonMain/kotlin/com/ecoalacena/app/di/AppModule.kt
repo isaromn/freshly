@@ -13,6 +13,7 @@ import com.ecoalacena.app.domain.recipe.RecipePhotoFinder
 import com.ecoalacena.app.domain.repository.PantryRepository
 import com.ecoalacena.app.domain.usecase.AnalyzeFoodUseCase
 import com.ecoalacena.app.domain.usecase.CalculateImpactUseCase
+import com.ecoalacena.app.domain.usecase.ConsumeRecipeIngredientsUseCase
 import com.ecoalacena.app.domain.usecase.EstimateExpirationDateUseCase
 import com.ecoalacena.app.domain.usecase.GetHybridRecipeUseCase
 import com.ecoalacena.app.presentation.impact.ImpactViewModel
@@ -59,6 +60,7 @@ val appModule = module {
     single { GeminiRecipeService(httpClient = get(), config = get<GeminiConfig>()) }
     single<RecipePhotoFinder> { UnsplashPhotoFinder(httpClient = get(), config = get<UnsplashConfig>()) }
     factory { GetHybridRecipeUseCase(repository = get(), recipeService = get(), photoFinder = get()) }
+    factory { ConsumeRecipeIngredientsUseCase(repository = get(), calculateImpact = get()) }
 
     // Impact dashboard (SDG 12)
     factory { CalculateImpactUseCase() }
@@ -66,7 +68,7 @@ val appModule = module {
     // Presentation (MVI)
     viewModel { PantryViewModel(repository = get(), estimateExpiration = get()) }
     viewModel { ScanViewModel(analyzeFood = get(), repository = get(), estimateExpiration = get()) }
-    viewModel { RecipeViewModel(getRecipes = get()) }
+    viewModel { RecipeViewModel(getRecipes = get(), repository = get(), consumeIngredients = get()) }
     viewModel { ImpactViewModel(repository = get(), calculateImpact = get()) }
 }
 

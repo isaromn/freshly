@@ -100,7 +100,8 @@ class GetHybridRecipeUseCase(
             ingredientLines = ingredients.map { it.toPromptLine(now) },
             outputLanguage = outputLanguage,
         )
-        val aiRecipe = aiResult.getOrNull()?.toRecipeOrNull()
+        // The AI recipe is built from every selected ingredient.
+        val aiRecipe = aiResult.getOrNull()?.toRecipeOrNull()?.copy(pantryItemIds = ingredients.map { it.id })
 
         val aiFailure = when {
             aiRecipe != null -> null

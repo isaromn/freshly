@@ -424,13 +424,13 @@ private class FakePantryRepository(initialItems: List<PantryItem> = emptyList())
         items.value = items.value.filterNot { it.id == id }
     }
 
-    override suspend fun markConsumed(item: PantryItem, consumedAtMillis: Long) {
+    override suspend fun markConsumed(item: PantryItem, consumedAtMillis: Long, quantity: Double): Double {
         items.value = items.value.filterNot { it.id == item.id }
 
         val weightKg = item.estimatedWeightKg()
         val wasExpired = item.expirationDate?.let { it < consumedAtMillis } ?: false
-        if (weightKg != null && !wasExpired) {
-            savedKg.value += weightKg
-        }
+        if (weightKg == null || wasExpired) return 0.0
+        savedKg.value += weightKg
+        return weightKg
     }
 }

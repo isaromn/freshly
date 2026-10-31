@@ -1,5 +1,7 @@
 package com.ecoalacena.app.presentation.recipes
 
+import com.ecoalacena.app.domain.model.ImpactMetrics
+import com.ecoalacena.app.domain.model.PantryItem
 import com.ecoalacena.app.domain.model.Recipe
 
 enum class RecipeStatus {
@@ -23,12 +25,43 @@ data class RecipeState(
     val selectedRecipeId: String? = null,
     /** Indexes of the steps the user ticked off, per recipe id. */
     val completedSteps: Map<String, Set<Int>> = emptyMap(),
+    /** The "recipe finished" sheet, or `null` when it is closed. */
+    val completion: RecipeCompletion? = null,
     val errorMessage: String? = null,
 ) {
     val selectedRecipe: Recipe?
         get() = recipes.firstOrNull { it.id == selectedRecipeId }
 
     fun completedStepsOf(recipeId: String): Set<Int> = completedSteps[recipeId].orEmpty()
+}
+
+/** A pantry item offered for discounting when a recipe is finished; all of it is selected at first. */
+data class CompletionIngredient(
+    val item: PantryItem,
+    val selected: Boolean = true,
+    val quantity: Double = item.quantity,
+)
+
+enum class CompletionPhase {
+    /** The user reviews which ingredients were used and how much. */
+    SELECTING,
+    SAVING,
+
+    /** The ingredients were discounted: the impact of the meal is shown. */
+    CELEBRATING,
+}
+
+data class RecipeCompletion(
+    val recipeId: String,
+    /** The recipe's ingredients that are still in the pantry. */
+    val ingredients: List<CompletionIngredient>,
+    val phase: CompletionPhase = CompletionPhase.SELECTING,
+    /** Impact of this meal alone, once it was discounted. */
+    val impact: ImpactMetrics? = null,
+    val errorMessage: String? = null,
+) {
+    val selectedCount: Int
+        get() = ingredients.count { it.selected }
 }
 
 sealed interface RecipeIntent {
@@ -42,6 +75,21 @@ sealed interface RecipeIntent {
     /** Goes back from the detail view to the list. */
     data object CloseRecipe : RecipeIntent
 
-    /** Marks a step as done, or as pending again if it was already done. */
+    /** Marks a step as done, or as pending again. Ticking off the last step finishes the recipe. */
     data class ToggleStep(val recipeId: String, val stepIndex: Int) : RecipeIntent
+
+    /** Opens the "recipe finished" sheet with the pantry items the recipe used. */
+    data class FinishRecipe(val recipeId: String) : RecipeIntent
+
+    /** Selects or unselects an ingredient to discount. */
+    data class ToggleCompletionIngredient(val itemId: String) : RecipeIntent
+
+    /** Changes how much of an ingredient was used (between 0 and what is in the pantry). */
+    data class SetCompletionQuantity(val itemId: String, val quantity: Double) : RecipeIntent
+
+    /** Discounts the selected ingredients from the pantry. */
+    data object ConfirmCompletion : RecipeIntent
+
+    /** Closes the sheet; after the celebration it also goes back to the list. */
+    data object DismissCompletion : RecipeIntent
 }

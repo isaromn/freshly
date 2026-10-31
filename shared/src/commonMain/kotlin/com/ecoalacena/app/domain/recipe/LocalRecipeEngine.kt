@@ -66,6 +66,7 @@ class LocalRecipeEngine(
             source = RecipeSource.OFFLINE,
             category = RecipeCategory.OTHER,
             imageQuery = "vegetable stir fry",
+            pantryItemIds = ingredients.take(GENERIC_MAX_INGREDIENTS).map { it.id },
         )
     }
 
@@ -92,6 +93,7 @@ class LocalRecipeEngine(
                 source = RecipeSource.OFFLINE,
                 category = template.category,
                 imageQuery = template.imageQuery,
+                pantryItemIds = items.map { it.id },
             )
         }
     }

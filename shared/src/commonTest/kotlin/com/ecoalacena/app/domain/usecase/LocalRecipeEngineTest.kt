@@ -48,6 +48,15 @@ class LocalRecipeEngineTest {
     }
 
     @Test
+    fun recipesRememberThePantryItemsTheyUse() {
+        val recipes = engine.suggest(listOf(testItem("1", "Zanahoria"), testItem("2", "Cebolla"), testItem("3", "Chocolatina")))
+
+        val soup = recipes.first { it.title == "Sopa casera de verduras" }
+
+        assertEquals(listOf("1", "2"), soup.pantryItemIds)
+    }
+
+    @Test
     fun genericRecipeUsesTheOtherCategory() {
         val recipe = engine.suggest(listOf(testItem("1", "Chocolatina"))).single()
 

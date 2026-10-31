@@ -64,6 +64,8 @@ data class Recipe(
     val imageUrl: String? = null,
     /** Who took the photo, shown next to it (required by Unsplash); `null` when there is no photo. */
     val imageCredit: String? = null,
+    /** Ids of the pantry items this recipe cooks with, offered for discounting when it is done. */
+    val pantryItemIds: List<String> = emptyList(),
 ) {
     /** `true` when Gemini wrote the recipe, `false` when it comes from the offline templates. */
     val isAiGenerated: Boolean

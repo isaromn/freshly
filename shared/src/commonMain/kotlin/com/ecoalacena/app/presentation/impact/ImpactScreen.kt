@@ -55,6 +55,7 @@ import com.ecoalacena.app.domain.usecase.CalculateImpactUseCase
 import com.ecoalacena.app.presentation.i18n.LocalAppStrings
 import com.ecoalacena.app.presentation.util.formatDecimal
 import com.ecoalacena.app.presentation.util.formatGrouped
+import com.ecoalacena.app.presentation.util.groupSeparator
 import org.koin.compose.viewmodel.koinViewModel
 import ecoalacenakmp.shared.generated.resources.Res
 import ecoalacenakmp.shared.generated.resources.logoNevera
@@ -63,9 +64,6 @@ import org.jetbrains.compose.resources.painterResource
 
 
 private const val COUNTER_DURATION_MILLIS = 1_200
-
-/** Thousands separator of the language: "45.000" in Spanish, "45,000" in English. */
-private fun AppStrings.groupSeparator(): Char = if (language == AppLanguage.ES) '.' else ','
 
 /**
  * Which pair of theme roles tints a metric card. Every tone is a `container` + `onContainer` pair,

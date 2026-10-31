@@ -69,18 +69,40 @@ class PantryRepositoryImpl(
         }
     }
 
-    override suspend fun markConsumed(item: PantryItem, consumedAtMillis: Long) {
+    override suspend fun markConsumed(item: PantryItem, consumedAtMillis: Long, quantity: Double): Double =
         withContext(dispatcher) {
-            database.transaction {
-                queries.deleteById(item.id)
+            val eaten = quantity.coerceIn(0.0, item.quantity)
+            val remaining = item.quantity - eaten
 
-                val weightKg = item.estimatedWeightKg()
+            database.transactionWithResult {
+                if (remaining <= LEFTOVER_EPSILON) {
+                    queries.deleteById(item.id)
+                } else {
+                    queries.insertItem(
+                        item.id,
+                        item.name,
+                        item.category.name,
+                        remaining,
+                        item.unit,
+                        item.expirationDate,
+                        if (item.isOrganic) 1L else 0L,
+                    )
+                }
+
+                val weightKg = item.copy(quantity = eaten).estimatedWeightKg()
                 val wasExpired = item.expirationDate?.let { it < consumedAtMillis } ?: false
                 if (weightKg != null && weightKg > 0.0 && !wasExpired) {
                     queries.insertSavedFood(weightKg, consumedAtMillis)
+                    weightKg
+                } else {
+                    0.0
                 }
             }
         }
+
+    private companion object {
+        /** Less than this is left over from rounding, not food: the item is removed. */
+        const val LEFTOVER_EPSILON = 1e-6
     }
 }
 
