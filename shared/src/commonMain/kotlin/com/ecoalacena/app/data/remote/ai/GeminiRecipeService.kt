@@ -106,7 +106,7 @@ class GeminiRecipeService(
         }
 
         return """
-            You are the recipe engine of EcoAlacena, an app that helps people cook with food that is
+            You are the recipe engine of Freshly, an app that helps people cook with food that is
             about to expire. You receive a list of pantry ingredients, the most urgent first, each with
             its quantity and the time left before it expires.
 

@@ -22,7 +22,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.ecoalacena.app"
+            packageName = "Freshly"
             packageVersion = "1.0.0"
         }
     }

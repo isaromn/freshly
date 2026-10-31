@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Freshly" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Shown while the app starts, before Compose draws its own splash. -->
+        <item name="android:windowBackground">@color/splash_background</item>
+    </style>
+</resources>

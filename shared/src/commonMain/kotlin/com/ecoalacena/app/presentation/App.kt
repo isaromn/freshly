@@ -1,5 +1,7 @@
 package com.ecoalacena.app.presentation
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -89,54 +91,70 @@ fun App() {
 
     CompositionLocalProvider(LocalAppStrings provides strings) {
         EcoAlacenaTheme {
-            var selectedTab by rememberSaveable(stateSaver = mainTabSaver) {
-                mutableStateOf(MainTab.PANTRY)
-            }
+            // The logo greets the user every time the app starts. `rememberSaveable` keeps it from
+            // showing again when Android recreates the screen (for example on rotation).
+            var showSplash by rememberSaveable { mutableStateOf(true) }
 
-            // Back from any other tab returns to the pantry (Android system back).
-            PlatformBackHandler(enabled = selectedTab != MainTab.PANTRY) {
-                selectedTab = MainTab.PANTRY
-            }
-
-            // The layout follows the size of the window: a bottom bar on phones, and a side rail
-            // with wider content on computer windows.
-            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                val useSideRail = maxWidth >= SIDE_RAIL_MIN_WIDTH
-
-                Scaffold(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    bottomBar = {
-                        if (!useSideRail) {
-                            BottomNavigation(
-                                selectedTab = selectedTab,
-                                onTabSelected = { selectedTab = it },
-                            )
-                        }
-                    },
-                ) { innerPadding ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
-                            // The screens inside have their own Scaffold: don't apply the insets twice.
-                            .consumeWindowInsets(innerPadding),
-                    ) {
-                        if (useSideRail) {
-                            SideNavigation(
-                                selectedTab = selectedTab,
-                                onTabSelected = { selectedTab = it },
-                            )
-                        }
-
-                        MainContent(
-                            selectedTab = selectedTab,
-                            onTabSelected = { selectedTab = it },
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxSize(),
-                        )
-                    }
+            Crossfade(targetState = showSplash, animationSpec = tween(durationMillis = 400)) { splash ->
+                if (splash) {
+                    SplashScreen(onFinished = { showSplash = false })
+                } else {
+                    MainLayout()
                 }
+            }
+        }
+    }
+}
+
+/** Navigation (bottom bar or side rail) and the screen of the selected tab. */
+@Composable
+private fun MainLayout() {
+    var selectedTab by rememberSaveable(stateSaver = mainTabSaver) {
+        mutableStateOf(MainTab.PANTRY)
+    }
+
+    // Back from any other tab returns to the pantry (Android system back).
+    PlatformBackHandler(enabled = selectedTab != MainTab.PANTRY) {
+        selectedTab = MainTab.PANTRY
+    }
+
+    // The layout follows the size of the window: a bottom bar on phones, and a side rail
+    // with wider content on computer windows.
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val useSideRail = maxWidth >= SIDE_RAIL_MIN_WIDTH
+
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            bottomBar = {
+                if (!useSideRail) {
+                    BottomNavigation(
+                        selectedTab = selectedTab,
+                        onTabSelected = { selectedTab = it },
+                    )
+                }
+            },
+        ) { innerPadding ->
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    // The screens inside have their own Scaffold: don't apply the insets twice.
+                    .consumeWindowInsets(innerPadding),
+            ) {
+                if (useSideRail) {
+                    SideNavigation(
+                        selectedTab = selectedTab,
+                        onTabSelected = { selectedTab = it },
+                    )
+                }
+
+                MainContent(
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it },
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxSize(),
+                )
             }
         }
     }
@@ -202,7 +220,7 @@ private fun SideNavigation(
         header = {
             Image(
                 painter = painterResource(Res.drawable.logoNevera),
-                contentDescription = "Logo EcoAlacena",
+                contentDescription = "Logo Freshly",
                 modifier = Modifier
                     .padding(top = 12.dp, bottom = 8.dp)
                     .size(48.dp),

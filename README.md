@@ -1,4 +1,4 @@
-# EcoAlacena 🥬
+# Freshly 🥬
 
 Aplicación **Kotlin Multiplatform + Compose Multiplatform** para reducir el desperdicio de alimentos en casa. Lleva el control de tu alacena, avisa de lo que está por caducar y propone recetas con lo que ya tienes.
 

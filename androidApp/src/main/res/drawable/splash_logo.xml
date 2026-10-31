@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Logo for the Android 12+ system splash: the icon area is 288dp and only the central
+     circle (about 192dp) is visible, so the logo is inset to fit inside it. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/logo_splash"
+    android:inset="40dp" />

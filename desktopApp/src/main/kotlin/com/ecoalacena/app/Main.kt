@@ -16,6 +16,7 @@ import com.ecoalacena.app.data.remote.ai.GeminiConfig
 import com.ecoalacena.app.data.remote.image.UnsplashConfig
 import com.ecoalacena.app.di.initKoin
 import com.ecoalacena.app.presentation.App
+import com.ecoalacena.app.presentation.appLogoPainter
 import java.awt.Dimension
 import java.io.File
 import java.util.Properties
@@ -38,7 +39,8 @@ fun main() {
         Window(
             onCloseRequest = ::exitApplication,
             state = windowState,
-            title = "EcoAlacenaKMP",
+            title = "Freshly",
+            icon = appLogoPainter(),
         ) {
             // Stops the user from shrinking the window until the layout stops being usable.
             LaunchedEffect(window) {

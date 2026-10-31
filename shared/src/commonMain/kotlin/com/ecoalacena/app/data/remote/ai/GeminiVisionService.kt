@@ -100,7 +100,7 @@ class GeminiVisionService(
         "Analyze this image and return the JSON. Write the product names in ${outputLanguage.aiName}."
 
     private fun systemPrompt(outputLanguage: AppLanguage): String = """
-        You are the vision engine of EcoAlacena, a pantry-tracking app that helps people
+        You are the vision engine of Freshly, a pantry-tracking app that helps people
         reduce food waste. You receive ONE image of one of these kinds:
         (a) a single food product or package;
         (b) several foods together: a fruit bowl, a fridge shelf, a shopping bag, groceries on a table;

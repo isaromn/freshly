@@ -237,7 +237,7 @@ private fun ImpactHeader(modifier: Modifier = Modifier) {
     ) {
         Image(
             painter = painterResource(Res.drawable.logoNevera),
-            contentDescription = "Logo EcoAlacena",
+            contentDescription = "Logo Freshly",
             modifier = Modifier.size(72.dp),
         )
 
