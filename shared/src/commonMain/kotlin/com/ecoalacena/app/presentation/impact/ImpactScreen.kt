@@ -46,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -66,6 +67,12 @@ import org.jetbrains.compose.resources.painterResource
 
 private const val COUNTER_DURATION_MILLIS = 1_200
 
+// Calories tone: an orange container with a readable text color in each theme.
+private val CALORIES_CONTAINER_LIGHT = Color(0xFFFFE0C7)
+private val ON_CALORIES_CONTAINER_LIGHT = Color(0xFF5C2600)
+private val CALORIES_CONTAINER_DARK = Color(0xFF4F2A10)
+private val ON_CALORIES_CONTAINER_DARK = Color(0xFFFFD2AE)
+
 /** Daily energy reference for an adult, used on food labels. */
 private const val KCAL_PER_DAY = 2_000.0
 
@@ -78,6 +85,9 @@ private enum class MetricTone {
     SECONDARY,
     TERTIARY,
     ERROR,
+
+    /** Warm orange, only for calories, so they don't look like the money card. */
+    CALORIES,
 }
 
 private class ToneColors(
@@ -93,6 +103,11 @@ private fun MetricTone.colors(): ToneColors {
         MetricTone.SECONDARY -> ToneColors(scheme.secondaryContainer, scheme.onSecondaryContainer)
         MetricTone.TERTIARY -> ToneColors(scheme.tertiaryContainer, scheme.onTertiaryContainer)
         MetricTone.ERROR -> ToneColors(scheme.errorContainer, scheme.onErrorContainer)
+        MetricTone.CALORIES -> if (scheme.background.luminance() < 0.5f) {
+            ToneColors(CALORIES_CONTAINER_DARK, ON_CALORIES_CONTAINER_DARK)
+        } else {
+            ToneColors(CALORIES_CONTAINER_LIGHT, ON_CALORIES_CONTAINER_LIGHT)
+        }
     }
 }
 
@@ -180,28 +195,21 @@ private fun ImpactContent(
                 )
             }
 
-            item(key = "nutrition-title", span = { GridItemSpan(maxLineSpan) }) {
-                Text(
-                    text = strings.nutritionSummaryTitle,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-
-            item(key = "calories", span = { GridItemSpan(maxLineSpan) }) {
+            // One more cell of the metrics grid, next to money, food and CO2e.
+            item(key = "calories") {
                 val animatedCalories = rememberAnimatedValue(state.savedCalories)
                 MetricCard(
                     icon = Icons.Filled.LocalFireDepartment,
-                    title = strings.nutritionSummaryHint,
+                    title = strings.caloriesSavedTitle,
                     value = formatGrouped(animatedCalories.toLong(), strings.groupSeparator()),
                     unit = "kcal",
                     explanation = if (state.savedCalories > 0.0) {
-                        strings.caloriesDaysEquivalent(formatDecimal(state.savedCalories / KCAL_PER_DAY, 1))
+                        strings.nutritionSummaryHint + ". " +
+                            strings.caloriesDaysEquivalent(formatDecimal(state.savedCalories / KCAL_PER_DAY, 1))
                     } else {
                         strings.nutritionSummaryEmpty
                     },
-                    tone = MetricTone.TERTIARY,
+                    tone = MetricTone.CALORIES,
                 )
             }
 

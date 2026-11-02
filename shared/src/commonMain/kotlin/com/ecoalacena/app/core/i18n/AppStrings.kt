@@ -44,7 +44,7 @@ interface AppStrings {
     val carbs: String
     val fat: String
     val nutritionDisclaimer: String
-    val nutritionSummaryTitle: String
+    val caloriesSavedTitle: String
     val nutritionSummaryHint: String
     fun caloriesDaysEquivalent(days: String): String
     val nutritionSummaryEmpty: String

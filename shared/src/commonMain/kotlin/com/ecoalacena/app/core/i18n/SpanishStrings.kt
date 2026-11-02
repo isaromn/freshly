@@ -46,8 +46,8 @@ object SpanishStrings : AppStrings {
     override val carbs = "Carbohidratos"
     override val fat = "Grasas"
     override val nutritionDisclaimer = "Estimación de la IA como guía, no es un consejo médico."
-    override val nutritionSummaryTitle = "Resumen nutricional"
-    override val nutritionSummaryHint = "Calorías de la comida que consumiste antes de que se venciera"
+    override val caloriesSavedTitle = "Calorías rescatadas"
+    override val nutritionSummaryHint = "Energía de la comida que consumiste antes de que se venciera"
     override fun caloriesDaysEquivalent(days: String) = "Unos $days días de energía para un adulto (2.000 kcal al día)"
     override val nutritionSummaryEmpty =
         "Escanea tus productos para estimar sus calorías. Los que añades a mano no las tienen."

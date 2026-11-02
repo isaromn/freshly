@@ -48,8 +48,8 @@ object EnglishStrings : AppStrings {
     override val carbs = "Carbs"
     override val fat = "Fat"
     override val nutritionDisclaimer = "AI estimate for guidance, not medical advice."
-    override val nutritionSummaryTitle = "Nutrition summary"
-    override val nutritionSummaryHint = "Calories of the food you ate before it expired"
+    override val caloriesSavedTitle = "Calories saved"
+    override val nutritionSummaryHint = "Energy of the food you ate before it expired"
     override fun caloriesDaysEquivalent(days: String) = "About $days days of energy for an adult (2,000 kcal a day)"
     override val nutritionSummaryEmpty =
         "Scan your products so we can estimate their calories. Items you type by hand have none."
