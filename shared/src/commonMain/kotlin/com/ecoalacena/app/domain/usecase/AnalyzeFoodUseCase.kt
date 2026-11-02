@@ -91,8 +91,16 @@ class AnalyzeFoodUseCase(
             expirationDate = expirationDate,
             isOrganic = isOrganic,
             category = itemCategory,
+            caloriesPerUnit = caloriesPerUnit?.takeIf { it in 0..MAX_CALORIES },
+            proteinGrams = proteinGrams.asGrams(),
+            carbsGrams = carbsGrams.asGrams(),
+            fatGrams = fatGrams.asGrams(),
         )
     }
+
+    /** A macronutrient value the model returned, or `null` when it is missing or not believable. */
+    private fun Double?.asGrams(): Float? =
+        this?.takeIf { it.isFinite() && it in 0.0..MAX_GRAMS }?.roundTo(1)?.toFloat()
 
     /** The model's category when it is usable; otherwise the one the name points to ("Blueberries"). */
     private fun GeminiAnalysisResult.resolveCategory(cleanName: String): Category =
@@ -147,6 +155,10 @@ class AnalyzeFoodUseCase(
         const val MIN_CONFIDENCE = 0.3
 
         private const val MAX_SHELF_LIFE_DAYS = 3650
+
+        /** Larger values are not believable even for a whole pack: they are dropped. */
+        private const val MAX_CALORIES = 10_000
+        private const val MAX_GRAMS = 1_000.0
         private const val DEFAULT_UNIT = "unit"
 
         private const val KG_PER_POUND = 0.45359237

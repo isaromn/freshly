@@ -1,0 +1,6 @@
+-- Version 2 -> 3: nutrition of pantry items, and calories of the food eaten in time.
+ALTER TABLE pantryItemEntity ADD COLUMN caloriesPerUnit INTEGER;
+ALTER TABLE pantryItemEntity ADD COLUMN proteinGrams REAL;
+ALTER TABLE pantryItemEntity ADD COLUMN carbsGrams REAL;
+ALTER TABLE pantryItemEntity ADD COLUMN fatGrams REAL;
+ALTER TABLE savedFoodEntity ADD COLUMN calories REAL;

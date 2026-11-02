@@ -1,6 +1,7 @@
 package com.ecoalacena.app.core.i18n
 
 import com.ecoalacena.app.domain.model.Category
+import com.ecoalacena.app.domain.model.NutritionBasis
 import com.ecoalacena.app.domain.model.RecipeDifficulty
 
 /**
@@ -35,6 +36,18 @@ interface AppStrings {
     val shoppingShareTitle: String
     val copiedToClipboard: String
     val shareError: String
+    fun caloriesPer(calories: Int, basis: NutritionBasis): String
+    val nutritionTitle: String
+    fun perServing(servings: Int?): String
+    val calories: String
+    val protein: String
+    val carbs: String
+    val fat: String
+    val nutritionDisclaimer: String
+    val nutritionSummaryTitle: String
+    val nutritionSummaryHint: String
+    fun caloriesDaysEquivalent(days: String): String
+    val nutritionSummaryEmpty: String
 
     // ---- Common ----
     val back: String

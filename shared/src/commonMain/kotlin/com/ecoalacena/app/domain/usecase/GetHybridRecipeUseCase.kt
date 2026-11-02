@@ -156,6 +156,22 @@ class GetHybridRecipeUseCase(
             source = RecipeSource.IS_AI,
             category = RecipeCategory.fromRaw(category),
             imageQuery = imageQuery.trim(),
+        ).withNutrition(this)
+    }
+
+    /** Adds the AI's nutrition estimate when it is believable; otherwise the recipe shows none. */
+    private fun Recipe.withNutrition(result: GeminiRecipeResult): Recipe {
+        val portions = result.servings?.coerceIn(1, MAX_SERVINGS) ?: 1
+        val calories = result.caloriesPerServing?.takeIf { it in 1..MAX_CALORIES_PER_SERVING } ?: return this
+        fun Double?.grams(): Float? = this?.takeIf { it.isFinite() && it in 0.0..MAX_GRAMS_PER_SERVING }?.toFloat()
+
+        return copy(
+            servings = portions,
+            caloriesPerServing = calories,
+            totalCalories = calories * portions,
+            proteinGrams = result.proteinGrams.grams(),
+            carbsGrams = result.carbsGrams.grams(),
+            fatGrams = result.fatGrams.grams(),
         )
     }
 
@@ -185,5 +201,8 @@ class GetHybridRecipeUseCase(
         const val LOCAL_RECIPES_WITH_AI = 2
         const val LOCAL_RECIPES_WITHOUT_AI = 3
         const val PHOTO_TIMEOUT_MILLIS = 5_000L
+        const val MAX_SERVINGS = 20
+        const val MAX_CALORIES_PER_SERVING = 5_000
+        const val MAX_GRAMS_PER_SERVING = 500.0
     }
 }

@@ -66,7 +66,23 @@ data class Recipe(
     val imageCredit: String? = null,
     /** Ids of the pantry items this recipe cooks with, offered for discounting when it is done. */
     val pantryItemIds: List<String> = emptyList(),
+    /** How many people the recipe feeds; `null` when unknown. */
+    val servings: Int? = null,
+    /** Estimated kcal of the whole recipe; `null` when unknown (offline recipes). */
+    val totalCalories: Int? = null,
+    /** Estimated kcal of one serving. */
+    val caloriesPerServing: Int? = null,
+    /** Grams of protein in one serving. */
+    val proteinGrams: Float? = null,
+    /** Grams of carbohydrates in one serving. */
+    val carbsGrams: Float? = null,
+    /** Grams of fat in one serving. */
+    val fatGrams: Float? = null,
 ) {
+    /** `true` when there is at least a calorie estimate to show. */
+    val hasNutrition: Boolean
+        get() = caloriesPerServing != null
+
     /** `true` when Gemini wrote the recipe, `false` when it comes from the offline templates. */
     val isAiGenerated: Boolean
         get() = source == RecipeSource.IS_AI

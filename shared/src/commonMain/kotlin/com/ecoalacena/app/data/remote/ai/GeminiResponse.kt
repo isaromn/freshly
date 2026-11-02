@@ -20,6 +20,11 @@ data class GeminiAnalysisResult(
     /** How sure the model is of this item, from 0 to 1. */
     val confidence: Double = 1.0,
     val isOrganic: Boolean = false,
+    /** kcal per 100 g / 100 ml, or per piece or pack, depending on [unit]. */
+    val caloriesPerUnit: Int? = null,
+    val proteinGrams: Double? = null,
+    val carbsGrams: Double? = null,
+    val fatGrams: Double? = null,
 )
 
 /**

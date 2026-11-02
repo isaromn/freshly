@@ -9,14 +9,21 @@ CREATE TABLE pantryItemEntity (
     quantity REAL NOT NULL,
     unit TEXT NOT NULL,
     expirationDate INTEGER,
-    isOrganic INTEGER NOT NULL DEFAULT 0
+    isOrganic INTEGER NOT NULL DEFAULT 0,
+    -- Nutrition per 100 g / 100 ml, or per piece or pack (see PantryItem.nutritionBasis). NULL = unknown.
+    caloriesPerUnit INTEGER,
+    proteinGrams REAL,
+    carbsGrams REAL,
+    fatGrams REAL
 );
 
 -- One row per product consumed before it expired; summed for the "waste avoided" metric.
 CREATE TABLE savedFoodEntity (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     kg REAL NOT NULL,
-    savedAt INTEGER NOT NULL
+    savedAt INTEGER NOT NULL,
+    -- Estimated kcal of the food that was eaten in time; NULL when unknown.
+    calories REAL
 );
 
 selectAll:
@@ -30,8 +37,11 @@ FROM pantryItemEntity
 WHERE id = ?;
 
 insertItem:
-INSERT OR REPLACE INTO pantryItemEntity(id, name, category, quantity, unit, expirationDate, isOrganic)
-VALUES (?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO pantryItemEntity(
+    id, name, category, quantity, unit, expirationDate, isOrganic,
+    caloriesPerUnit, proteinGrams, carbsGrams, fatGrams
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 deleteById:
 DELETE FROM pantryItemEntity
@@ -48,11 +58,15 @@ WHERE expirationDate <= :threshold
 ORDER BY expirationDate ASC;
 
 insertSavedFood:
-INSERT INTO savedFoodEntity(kg, savedAt)
-VALUES (?, ?);
+INSERT INTO savedFoodEntity(kg, savedAt, calories)
+VALUES (?, ?, ?);
 
 selectTotalSavedKg:
 SELECT COALESCE(SUM(kg), 0.0)
+FROM savedFoodEntity;
+
+selectTotalSavedCalories:
+SELECT COALESCE(SUM(calories), 0.0)
 FROM savedFoodEntity;
 
 -- What happened to items that left the pantry (kind = 'CONSUMED' or 'DISCARDED'), so the shopping

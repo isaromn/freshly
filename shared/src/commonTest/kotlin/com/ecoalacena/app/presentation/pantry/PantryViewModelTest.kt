@@ -48,6 +48,19 @@ class PantryViewModelTest {
     private val noDate = item("noDate", expiresInDays = null, category = Category.PANTRY_STAPLE)
 
     @Test
+    fun editingAnItemKeepsItsNutritionUnlessTheFoodChanges() = runTest {
+        val scanned = PantryItem("milk", "Leche", 1.0, "l", NOW + 5 * MILLIS_PER_DAY, false, Category.DAIRY, caloriesPerUnit = 61)
+        val repository = FakePantryRepository(listOf(scanned))
+        val viewModel = viewModel(repository)
+
+        viewModel.onIntent(PantryIntent.SaveItem(scanned.toInput().copy(quantity = 2.0)))
+        assertEquals(61, repository.observeById("milk").first()?.caloriesPerUnit)
+
+        viewModel.onIntent(PantryIntent.SaveItem(scanned.toInput().copy(name = "Jugo de naranja")))
+        assertEquals(null, repository.observeById("milk").first()?.caloriesPerUnit)
+    }
+
+    @Test
     fun classifiesFreshnessAndCountsUrgentItems() {
         val viewModel = viewModelWith(fresh, soon, expired, noDate)
 
@@ -363,6 +376,9 @@ class PantryViewModelTest {
             newItemId = { "new-id" },
         )
 
+    private fun PantryItem.toInput() =
+        PantryItemInput(id, name, category, quantity, unit, expirationDate, isOrganic)
+
     private fun viewModelWith(vararg items: PantryItem) = viewModel(FakePantryRepository(items.toList()))
 
     private fun input(
@@ -417,6 +433,8 @@ private class FakePantryRepository(initialItems: List<PantryItem> = emptyList())
         }
 
     override fun observeSavedKg(): Flow<Double> = savedKg
+
+    override fun observeSavedCalories(): Flow<Double> = flowOf(0.0)
 
     override suspend fun upsert(item: PantryItem) {
         items.value = items.value.filterNot { it.id == item.id } + item

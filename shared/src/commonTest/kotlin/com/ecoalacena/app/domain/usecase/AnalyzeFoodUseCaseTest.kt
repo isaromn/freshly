@@ -7,6 +7,7 @@ import com.ecoalacena.app.data.remote.ai.GeminiException
 import com.ecoalacena.app.data.remote.ai.GeminiVisionService
 import com.ecoalacena.app.data.remote.ai.geminiJson
 import com.ecoalacena.app.domain.model.Category
+import com.ecoalacena.app.domain.model.NutritionBasis
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -178,6 +179,44 @@ class AnalyzeFoodUseCaseTest {
     }
 
     @Test
+    fun keepsTheNutritionEstimatedByTheModel() = runTest {
+        val useCase = useCaseReturning(
+            geminiBody(
+                """{"items":[{"name":"Leche entera","category":"DAIRY","quantity":1,"unit":"l",""" +
+                    """"estimatedDaysUntilExpiration":7,"confidence":0.9,"caloriesPerUnit":61,""" +
+                    """"proteinGrams":3.24,"carbsGrams":4.8,"fatGrams":3.3}]}""",
+            ),
+        )
+
+        val item = useCase(imageBytes).getOrThrow().single()
+
+        assertEquals(61, item.caloriesPerUnit)
+        assertEquals(3.2f, item.proteinGrams)
+        assertEquals(4.8f, item.carbsGrams)
+        assertEquals(3.3f, item.fatGrams)
+        assertEquals(NutritionBasis.PER_100_ML, item.nutritionBasis)
+        assertEquals(610.0, item.totalCalories())
+    }
+
+    @Test
+    fun dropsNutritionThatIsNotBelievable() = runTest {
+        val useCase = useCaseReturning(
+            geminiBody(
+                """{"items":[{"name":"Pan","category":"BAKERY","quantity":1,"unit":"unit",""" +
+                    """"estimatedDaysUntilExpiration":5,"confidence":0.9,"caloriesPerUnit":-5,""" +
+                    """"proteinGrams":5000,"carbsGrams":40}]}""",
+            ),
+        )
+
+        val item = useCase(imageBytes).getOrThrow().single()
+
+        assertEquals(null, item.caloriesPerUnit)
+        assertEquals(null, item.proteinGrams)
+        assertEquals(40f, item.carbsGrams)
+        assertEquals(null, item.totalCalories())
+    }
+
+    @Test
     fun leavesOutItemsTheModelIsNotSureAbout() = runTest {
         val useCase = useCaseReturning(
             geminiBody(
@@ -260,7 +299,8 @@ class AnalyzeFoodUseCaseTest {
             listOf("kg", "g", "l", "ml", "unit", "pack"),
             properties.getValue("unit").jsonObject.getValue("enum").jsonArray.map { it.jsonPrimitive.content },
         )
-        assertTrue("confidence" in item.getValue("required").jsonArray.map { it.jsonPrimitive.content })
+        val required = item.getValue("required").jsonArray.map { it.jsonPrimitive.content }
+        assertTrue(listOf("confidence", "caloriesPerUnit", "proteinGrams", "carbsGrams", "fatGrams").all { it in required })
     }
 
     private fun useCaseReturning(

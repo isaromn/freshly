@@ -22,6 +22,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
@@ -154,6 +155,10 @@ private fun LazyListScope.recipeOverview(recipe: Recipe) {
         }
     }
 
+    if (recipe.hasNutrition) {
+        item(key = "nutrition") { NutritionCard(recipe) }
+    }
+
     item(key = "ingredients") {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             DetailSectionTitle(LocalAppStrings.current.ingredientsTitle)
@@ -223,6 +228,20 @@ internal fun RecipeMeta(recipe: Recipe, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        recipe.caloriesPerServing?.let { calories ->
+            Spacer(Modifier.width(12.dp))
+            Icon(
+                imageVector = Icons.Filled.LocalFireDepartment,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.tertiary,
+            )
+            Spacer(Modifier.width(2.dp))
+            Text(
+                text = "$calories kcal",
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
     }
 }
 

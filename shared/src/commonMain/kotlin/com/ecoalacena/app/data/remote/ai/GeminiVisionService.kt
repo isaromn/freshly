@@ -159,6 +159,14 @@ class GeminiVisionService(
           unreadable receipt line). Do not list items below 0.2.
         - isOrganic: true only if the label or receipt explicitly says organic, ORG, orgánico,
           biológico, bio or eco. Otherwise false.
+        - NUTRITION: "caloriesPerUnit" (integer, kcal), "proteinGrams", "carbsGrams" and "fatGrams"
+          (numbers with at most one decimal) describe a fixed amount of the product that depends
+          on its unit:
+          * unit "kg" or "g": per 100 g.  * unit "l" or "ml": per 100 ml.
+          * unit "unit": per piece (one apple, one egg, one yogurt cup).  * unit "pack": per pack.
+          If a nutrition label is legible, use it. Otherwise use typical values from food
+          composition tables (for example USDA), for the product as sold (raw meat, raw rice).
+          Never return negative numbers; water and plain coffee or tea have 0 kcal.
 
         ENGLISH AND SPANISH TERMS
         - DAIRY: Milk / Leche, Yogurt / Yogur, Cheese / Queso, Butter / Mantequilla,
@@ -180,14 +188,18 @@ class GeminiVisionService(
         EXAMPLES (names shown in English)
         - Photo of 4 red apples, firm and shiny:
           {"name": "Red apples", "category": "FRUIT_VEG", "quantity": 4, "unit": "unit",
-          "estimatedDaysUntilExpiration": 30, "confidence": 0.95, "isOrganic": false}
+          "estimatedDaysUntilExpiration": 30, "confidence": 0.95, "isOrganic": false,
+          "caloriesPerUnit": 95, "proteinGrams": 0.5, "carbsGrams": 25, "fatGrams": 0.3}
         - Photo of 3 bananas with many brown spots:
           {"name": "Bananas", "category": "FRUIT_VEG", "quantity": 3, "unit": "unit",
-          "estimatedDaysUntilExpiration": 2, "confidence": 0.95, "isOrganic": false}
+          "estimatedDaysUntilExpiration": 2, "confidence": 0.95, "isOrganic": false,
+          "caloriesPerUnit": 105, "proteinGrams": 1.3, "carbsGrams": 27, "fatGrams": 0.4}
         - Receipt line "ORG WHL MILK 1GAL":
           {"name": "Whole milk", "category": "DAIRY", "quantity": 3.8, "unit": "l",
-          "estimatedDaysUntilExpiration": 7, "confidence": 0.9, "isOrganic": true}
-        - Receipt line "CHKN BRST 2.5 LB": MEAT, quantity 1.13, unit "kg", about 3 days.
+          "estimatedDaysUntilExpiration": 7, "confidence": 0.9, "isOrganic": true,
+          "caloriesPerUnit": 61, "proteinGrams": 3.2, "carbsGrams": 4.8, "fatGrams": 3.3}
+        - Receipt line "CHKN BRST 2.5 LB": MEAT, quantity 1.13, unit "kg", about 3 days,
+          per 100 g: 120 kcal, 22.5 g protein, 0 g carbs, 2.6 g fat.
 
         OUTPUT
         - Respond with a single JSON object that follows the response schema, and nothing else:
@@ -231,6 +243,10 @@ class GeminiVisionService(
                             putJsonObject("estimatedDaysUntilExpiration") { put("type", "INTEGER") }
                             putJsonObject("confidence") { put("type", "NUMBER") }
                             putJsonObject("isOrganic") { put("type", "BOOLEAN") }
+                            putJsonObject("caloriesPerUnit") { put("type", "INTEGER") }
+                            putJsonObject("proteinGrams") { put("type", "NUMBER") }
+                            putJsonObject("carbsGrams") { put("type", "NUMBER") }
+                            putJsonObject("fatGrams") { put("type", "NUMBER") }
                         }
                         putJsonArray("required") {
                             add("name")
@@ -240,6 +256,10 @@ class GeminiVisionService(
                             add("estimatedDaysUntilExpiration")
                             add("confidence")
                             add("isOrganic")
+                            add("caloriesPerUnit")
+                            add("proteinGrams")
+                            add("carbsGrams")
+                            add("fatGrams")
                         }
                         putJsonArray("propertyOrdering") {
                             add("name")
@@ -249,6 +269,10 @@ class GeminiVisionService(
                             add("estimatedDaysUntilExpiration")
                             add("confidence")
                             add("isOrganic")
+                            add("caloriesPerUnit")
+                            add("proteinGrams")
+                            add("carbsGrams")
+                            add("fatGrams")
                         }
                     }
                 }

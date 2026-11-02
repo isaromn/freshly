@@ -82,7 +82,7 @@ class PantryRepositoryImplTest {
     }
 
     @Test
-    fun aDatabaseFromVersionOneGetsTheShoppingTables() = runTest {
+    fun aDatabaseFromVersionOneGetsTheShoppingTablesAndNutrition() = runTest {
         val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         // The tables of version 1, as they were before the shopping list existed.
         driver.execute(
@@ -107,7 +107,33 @@ class PantryRepositoryImplTest {
         val shopping = ShoppingRepositoryImpl(database, Dispatchers.Unconfined)
         shopping.addManualItem(ManualShoppingItem("1", "Café", NOW))
         assertEquals(listOf("Café"), shopping.observeManualItems().first().map { it.name })
-        assertEquals(2L, PantryDatabase.Schema.version)
+
+        val pantry = PantryRepositoryImpl(database, Dispatchers.Unconfined)
+        pantry.upsert(rice.copy(caloriesPerUnit = 130))
+        assertEquals(130, pantry.observeById("rice").first()?.caloriesPerUnit)
+        assertEquals(3L, PantryDatabase.Schema.version)
+    }
+
+    @Test
+    fun nutritionIsStoredAndEatingInTimeAddsItsCalories() = runTest {
+        val apples = rice.copy(
+            id = "apples",
+            name = "Manzanas",
+            quantity = 4.0,
+            unit = "unit",
+            caloriesPerUnit = 95,
+            proteinGrams = 0.5f,
+            carbsGrams = 25f,
+            fatGrams = 0.3f,
+        )
+        repository.upsert(apples)
+        assertEquals(apples, repository.observeById("apples").first())
+
+        repository.markConsumed(apples, NOW, quantity = 2.0)
+
+        // Two apples of 95 kcal; the two left keep their nutrition.
+        assertEquals(190.0, repository.observeSavedCalories().first())
+        assertEquals(95, repository.observeById("apples").first()?.caloriesPerUnit)
     }
 
     private companion object {

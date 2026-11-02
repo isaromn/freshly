@@ -5,6 +5,7 @@ import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOne
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import com.ecoalacena.app.database.PantryDatabase
+import com.ecoalacena.app.database.PantryDatabaseQueries
 import com.ecoalacena.app.database.PantryItemEntity
 import com.ecoalacena.app.domain.model.Category
 import com.ecoalacena.app.domain.model.PantryEvent
@@ -51,17 +52,14 @@ class PantryRepositoryImpl(
             .asFlow()
             .mapToOne(dispatcher)
 
+    override fun observeSavedCalories(): Flow<Double> =
+        queries.selectTotalSavedCalories()
+            .asFlow()
+            .mapToOne(dispatcher)
+
     override suspend fun upsert(item: PantryItem) {
         withContext(dispatcher) {
-            queries.insertItem(
-                item.id,
-                item.name,
-                item.category.name,
-                item.quantity,
-                item.unit,
-                item.expirationDate,
-                if (item.isOrganic) 1L else 0L,
-            )
+            queries.insertItem(item)
         }
     }
 
@@ -113,15 +111,7 @@ class PantryRepositoryImpl(
                 if (remaining <= LEFTOVER_EPSILON) {
                     queries.deleteById(item.id)
                 } else {
-                    queries.insertItem(
-                        item.id,
-                        item.name,
-                        item.category.name,
-                        remaining,
-                        item.unit,
-                        item.expirationDate,
-                        if (item.isOrganic) 1L else 0L,
-                    )
+                    queries.insertItem(item.copy(quantity = remaining))
                 }
 
                 queries.insertEvent(
@@ -133,10 +123,11 @@ class PantryRepositoryImpl(
                     consumedAtMillis,
                 )
 
-                val weightKg = item.copy(quantity = eaten).estimatedWeightKg()
+                val eatenPart = item.copy(quantity = eaten)
+                val weightKg = eatenPart.estimatedWeightKg()
                 val wasExpired = item.expirationDate?.let { it < consumedAtMillis } ?: false
                 if (weightKg != null && weightKg > 0.0 && !wasExpired) {
-                    queries.insertSavedFood(weightKg, consumedAtMillis)
+                    queries.insertSavedFood(weightKg, consumedAtMillis, eatenPart.totalCalories())
                     weightKg
                 } else {
                     0.0
@@ -150,6 +141,22 @@ class PantryRepositoryImpl(
     }
 }
 
+private fun PantryDatabaseQueries.insertItem(item: PantryItem) {
+    insertItem(
+        item.id,
+        item.name,
+        item.category.name,
+        item.quantity,
+        item.unit,
+        item.expirationDate,
+        if (item.isOrganic) 1L else 0L,
+        item.caloriesPerUnit?.toLong(),
+        item.proteinGrams?.toDouble(),
+        item.carbsGrams?.toDouble(),
+        item.fatGrams?.toDouble(),
+    )
+}
+
 private fun PantryItemEntity.toDomain(): PantryItem =
     PantryItem(
         id = id,
@@ -159,4 +166,8 @@ private fun PantryItemEntity.toDomain(): PantryItem =
         expirationDate = expirationDate,
         isOrganic = isOrganic != 0L,
         category = Category.fromRaw(category),
+        caloriesPerUnit = caloriesPerUnit?.toInt(),
+        proteinGrams = proteinGrams?.toFloat(),
+        carbsGrams = carbsGrams?.toFloat(),
+        fatGrams = fatGrams?.toFloat(),
     )

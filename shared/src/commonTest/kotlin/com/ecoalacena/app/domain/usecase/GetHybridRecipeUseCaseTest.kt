@@ -105,6 +105,23 @@ class GetHybridRecipeUseCaseTest {
     }
 
     @Test
+    fun aiRecipeCarriesItsNutritionPerServingAndInTotal() = runTest {
+        val useCase = useCaseFor(testItem("carrot", "Zanahoria", expiresInDays = 2))
+
+        val recipes = useCase().getOrThrow().recipes
+        val aiRecipe = recipes.first()
+
+        assertEquals(2, aiRecipe.servings)
+        assertEquals(180, aiRecipe.caloriesPerServing)
+        assertEquals(360, aiRecipe.totalCalories)
+        assertEquals(4.5f, aiRecipe.proteinGrams)
+        assertEquals(22f, aiRecipe.carbsGrams)
+        assertEquals(8f, aiRecipe.fatGrams)
+        // Offline recipes have no nutrition estimate.
+        assertTrue(recipes.drop(1).none { it.hasNutrition })
+    }
+
+    @Test
     fun withoutAPhotoTheRecipesKeepTheirLocalIllustration() = runTest {
         val useCase = useCaseFor(testItem("carrot", "Zanahoria", expiresInDays = 2))
 
@@ -275,6 +292,7 @@ class GetHybridRecipeUseCaseTest {
         const val AI_RECIPE_JSON =
             """{"title":"Sopa de zanahoria","ingredients":["2 zanahorias"],""" +
                 """"steps":["Cortar","Hervir","Servir"],"prepTimeMinutes":25,"difficulty":"EASY",""" +
-                """"category":"SOUP","imageQuery":"carrot soup"}"""
+                """"category":"SOUP","imageQuery":"carrot soup","servings":2,"caloriesPerServing":180,""" +
+                """"proteinGrams":4.5,"carbsGrams":22,"fatGrams":8}"""
     }
 }

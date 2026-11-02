@@ -1,6 +1,7 @@
 package com.ecoalacena.app.core.i18n
 
 import com.ecoalacena.app.domain.model.Category
+import com.ecoalacena.app.domain.model.NutritionBasis
 import com.ecoalacena.app.domain.model.RecipeDifficulty
 
 object SpanishStrings : AppStrings {
@@ -30,6 +31,26 @@ object SpanishStrings : AppStrings {
     override val shoppingShareTitle = "🛒 *Freshly - Lista de compras:*"
     override val copiedToClipboard = "¡Lista copiada al portapapeles!"
     override val shareError = "No se pudo compartir la lista."
+    override fun caloriesPer(calories: Int, basis: NutritionBasis) =
+        "$calories kcal / " + when (basis) {
+            NutritionBasis.PER_100_G -> "100 g"
+            NutritionBasis.PER_100_ML -> "100 ml"
+            NutritionBasis.PER_PIECE -> "u."
+            NutritionBasis.PER_PACK -> "paq."
+        }
+    override val nutritionTitle = "Información nutricional"
+    override fun perServing(servings: Int?) =
+        if (servings == null) "Por porción" else "Por porción · rinde $servings"
+    override val calories = "Calorías"
+    override val protein = "Proteínas"
+    override val carbs = "Carbohidratos"
+    override val fat = "Grasas"
+    override val nutritionDisclaimer = "Estimación de la IA como guía, no es un consejo médico."
+    override val nutritionSummaryTitle = "Resumen nutricional"
+    override val nutritionSummaryHint = "Calorías de la comida que consumiste antes de que se venciera"
+    override fun caloriesDaysEquivalent(days: String) = "Unos $days días de energía para un adulto (2.000 kcal al día)"
+    override val nutritionSummaryEmpty =
+        "Escanea tus productos para estimar sus calorías. Los que añades a mano no las tienen."
 
     // ---- Common ----
     override val back = "Volver"

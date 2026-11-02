@@ -55,6 +55,14 @@ enum class Category {
     }
 }
 
+/** The amount of food the nutrition fields of a [PantryItem] describe. */
+enum class NutritionBasis {
+    PER_100_G,
+    PER_100_ML,
+    PER_PIECE,
+    PER_PACK,
+}
+
 data class PantryItem(
     val id: String,
     val name: String,
@@ -63,7 +71,38 @@ data class PantryItem(
     val expirationDate: Long?,
     val isOrganic: Boolean,
     val category: Category = Category.OTHER,
+    /**
+     * Estimated energy, in kcal, of one [nutritionBasis]: per 100 g (or 100 ml) for items measured
+     * by weight or volume, per piece or pack for items counted by `unit` or `pack`.
+     * `null` when it is not known (for example items typed by hand).
+     */
+    val caloriesPerUnit: Int? = null,
+    /** Grams of protein per [nutritionBasis]. */
+    val proteinGrams: Float? = null,
+    /** Grams of carbohydrates per [nutritionBasis]. */
+    val carbsGrams: Float? = null,
+    /** Grams of fat per [nutritionBasis]. */
+    val fatGrams: Float? = null,
 ) {
+
+    /** What the nutrition fields refer to: 100 g / 100 ml, or one piece or pack. */
+    val nutritionBasis: NutritionBasis
+        get() = when (unit.lowercase()) {
+            "kg", "g" -> NutritionBasis.PER_100_G
+            "l", "ml" -> NutritionBasis.PER_100_ML
+            "pack" -> NutritionBasis.PER_PACK
+            else -> NutritionBasis.PER_PIECE
+        }
+
+    /** Estimated kcal of the whole item ([quantity] of it), or `null` when the calories are unknown. */
+    fun totalCalories(): Double? {
+        val perUnit = caloriesPerUnit ?: return null
+        return when (unit.lowercase()) {
+            "kg", "l" -> quantity * 10 * perUnit
+            "g", "ml" -> quantity / 100 * perUnit
+            else -> quantity * perUnit
+        }
+    }
 
     /**
      * Rough weight in kilograms, or `null` when the unit is not recognised.

@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Park
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.Scale
@@ -64,6 +65,9 @@ import org.jetbrains.compose.resources.painterResource
 
 
 private const val COUNTER_DURATION_MILLIS = 1_200
+
+/** Daily energy reference for an adult, used on food labels. */
+private const val KCAL_PER_DAY = 2_000.0
 
 /**
  * Which pair of theme roles tints a metric card. Every tone is a `container` + `onContainer` pair,
@@ -173,6 +177,31 @@ private fun ImpactContent(
                         formatDecimal(CalculateImpactUseCase.CO2E_KG_PER_KG_FOOD, 1),
                     ),
                     tone = MetricTone.SECONDARY,
+                )
+            }
+
+            item(key = "nutrition-title", span = { GridItemSpan(maxLineSpan) }) {
+                Text(
+                    text = strings.nutritionSummaryTitle,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+
+            item(key = "calories", span = { GridItemSpan(maxLineSpan) }) {
+                val animatedCalories = rememberAnimatedValue(state.savedCalories)
+                MetricCard(
+                    icon = Icons.Filled.LocalFireDepartment,
+                    title = strings.nutritionSummaryHint,
+                    value = formatGrouped(animatedCalories.toLong(), strings.groupSeparator()),
+                    unit = "kcal",
+                    explanation = if (state.savedCalories > 0.0) {
+                        strings.caloriesDaysEquivalent(formatDecimal(state.savedCalories / KCAL_PER_DAY, 1))
+                    } else {
+                        strings.nutritionSummaryEmpty
+                    },
+                    tone = MetricTone.TERTIARY,
                 )
             }
 

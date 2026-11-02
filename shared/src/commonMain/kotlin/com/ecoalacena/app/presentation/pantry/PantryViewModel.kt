@@ -98,6 +98,9 @@ class PantryViewModel(
         )
     }
 
+    private fun PantryItem.keepsNutritionFor(edited: PantryItem): Boolean =
+        name.trim().equals(edited.name.trim(), ignoreCase = true) && nutritionBasis == edited.nutritionBasis
+
     private fun findItem(itemId: String): PantryItemUi? =
         _state.value.items.firstOrNull { it.item.id == itemId }
 
@@ -144,7 +147,7 @@ class PantryViewModel(
         val enteredDate = input.expirationDate
         val expirationDate = enteredDate ?: estimateExpiration(name, input.category, nowMillis())
 
-        val item = PantryItem(
+        val edited = PantryItem(
             id = input.id ?: newItemId(),
             name = name,
             quantity = input.quantity,
@@ -153,6 +156,19 @@ class PantryViewModel(
             isOrganic = input.isOrganic,
             category = input.category,
         )
+        // The form has no nutrition fields: an edit keeps what the scanner estimated, as long as it
+        // is still the same food measured the same way (otherwise those numbers would be wrong).
+        val previous = input.id?.let { id -> findItem(id)?.item }
+        val item = if (previous != null && previous.keepsNutritionFor(edited)) {
+            edited.copy(
+                caloriesPerUnit = previous.caloriesPerUnit,
+                proteinGrams = previous.proteinGrams,
+                carbsGrams = previous.carbsGrams,
+                fatGrams = previous.fatGrams,
+            )
+        } else {
+            edited
+        }
 
         launchSafely(error = { saveError }) {
             repository.upsert(item)
