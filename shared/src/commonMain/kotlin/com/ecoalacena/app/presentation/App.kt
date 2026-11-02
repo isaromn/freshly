@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -47,6 +48,7 @@ import com.ecoalacena.app.presentation.pantry.PantryScreen
 import com.ecoalacena.app.presentation.platform.PlatformBackHandler
 import com.ecoalacena.app.presentation.recipes.RecipeScreen
 import com.ecoalacena.app.presentation.scan.ScanScreen
+import com.ecoalacena.app.presentation.shopping.ShoppingScreen
 import com.ecoalacena.app.presentation.theme.EcoAlacenaTheme
 
 // Icons are vectors, so they look exactly the same on Android, iOS and desktop (emojis do not:
@@ -55,6 +57,7 @@ private enum class MainTab(val icon: ImageVector) {
     PANTRY(Icons.Filled.Inventory2),
     SCAN(Icons.Filled.DocumentScanner),
     RECIPES(Icons.Filled.Restaurant),
+    SHOPPING(Icons.Filled.ShoppingCart),
     IMPACT(Icons.Filled.Eco),
 }
 
@@ -64,6 +67,7 @@ private fun MainTab.shortLabel(strings: AppStrings): String =
         MainTab.PANTRY -> strings.tabPantry
         MainTab.SCAN -> strings.tabScannerShort
         MainTab.RECIPES -> strings.tabRecipesShort
+        MainTab.SHOPPING -> strings.tabShoppingShort
         MainTab.IMPACT -> strings.tabImpactShort
     }
 
@@ -73,6 +77,7 @@ private fun MainTab.fullLabel(strings: AppStrings): String =
         MainTab.PANTRY -> strings.tabPantry
         MainTab.SCAN -> strings.tabScanner
         MainTab.RECIPES -> strings.tabRecipes
+        MainTab.SHOPPING -> strings.tabShopping
         MainTab.IMPACT -> strings.tabImpact
     }
 
@@ -180,6 +185,10 @@ private fun MainContent(
             )
 
             MainTab.RECIPES -> RecipeScreen(
+                modifier = Modifier.fillMaxSize(),
+            )
+
+            MainTab.SHOPPING -> ShoppingScreen(
                 modifier = Modifier.fillMaxSize(),
             )
 

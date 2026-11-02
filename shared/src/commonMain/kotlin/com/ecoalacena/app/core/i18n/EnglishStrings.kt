@@ -15,6 +15,22 @@ object EnglishStrings : AppStrings {
     override val tabScannerShort = "Scanner"
     override val tabRecipesShort = "Recipes"
     override val tabImpactShort = "Impact"
+    override val tabShopping = "Shopping List"
+    override val tabShoppingShort = "Shopping"
+    override val shoppingSubtitle = "What ran out or expired in the last 7 days"
+    override val shoppingAddPlaceholder = "Add a product"
+    override val shoppingAdd = "Add"
+    override val shoppingShare = "Share list"
+    override val shoppingEmptyTitle = "Your list is empty"
+    override val shoppingEmptyHint =
+        "When you use something up or it expires, it shows up here. You can also add products by hand."
+    override val shoppingReasonConsumed = "You used it up"
+    override val shoppingReasonExpired = "It expired"
+    override val shoppingReasonManual = "Added by you"
+    override val removeFromList = "Remove from the list"
+    override val shoppingShareTitle = "🛒 *Freshly - Shopping List:*"
+    override val copiedToClipboard = "Copied to clipboard!"
+    override val shareError = "Couldn't share the list."
 
     // ---- Common ----
     override val back = "Back"

@@ -7,6 +7,8 @@ import app.cash.sqldelight.coroutines.mapToOneOrNull
 import com.ecoalacena.app.database.PantryDatabase
 import com.ecoalacena.app.database.PantryItemEntity
 import com.ecoalacena.app.domain.model.Category
+import com.ecoalacena.app.domain.model.PantryEvent
+import com.ecoalacena.app.domain.model.PantryEventKind
 import com.ecoalacena.app.domain.model.PantryItem
 import com.ecoalacena.app.domain.repository.PantryRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -69,6 +71,39 @@ class PantryRepositoryImpl(
         }
     }
 
+    override suspend fun discard(item: PantryItem, discardedAtMillis: Long) {
+        withContext(dispatcher) {
+            database.transaction {
+                queries.deleteById(item.id)
+                queries.insertEvent(
+                    item.name,
+                    item.category.name,
+                    item.quantity,
+                    item.unit,
+                    PantryEventKind.DISCARDED.name,
+                    discardedAtMillis,
+                )
+            }
+        }
+    }
+
+    override fun observeEventsSince(sinceMillis: Long): Flow<List<PantryEvent>> =
+        queries.selectEventsSince(sinceMillis)
+            .asFlow()
+            .mapToList(dispatcher)
+            .map { entities ->
+                entities.map { entity ->
+                    PantryEvent(
+                        name = entity.name,
+                        category = Category.fromRaw(entity.category),
+                        quantity = entity.quantity,
+                        unit = entity.unit,
+                        kind = PantryEventKind.entries.firstOrNull { it.name == entity.kind } ?: PantryEventKind.CONSUMED,
+                        happenedAt = entity.happenedAt,
+                    )
+                }
+            }
+
     override suspend fun markConsumed(item: PantryItem, consumedAtMillis: Long, quantity: Double): Double =
         withContext(dispatcher) {
             val eaten = quantity.coerceIn(0.0, item.quantity)
@@ -88,6 +123,15 @@ class PantryRepositoryImpl(
                         if (item.isOrganic) 1L else 0L,
                     )
                 }
+
+                queries.insertEvent(
+                    item.name,
+                    item.category.name,
+                    eaten,
+                    item.unit,
+                    PantryEventKind.CONSUMED.name,
+                    consumedAtMillis,
+                )
 
                 val weightKg = item.copy(quantity = eaten).estimatedWeightKg()
                 val wasExpired = item.expirationDate?.let { it < consumedAtMillis } ?: false

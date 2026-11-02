@@ -14,6 +14,22 @@ object SpanishStrings : AppStrings {
     override val tabScannerShort = "Escáner"
     override val tabRecipesShort = "Recetas"
     override val tabImpactShort = "Impacto"
+    override val tabShopping = "Lista de compras"
+    override val tabShoppingShort = "Compras"
+    override val shoppingSubtitle = "Lo que se acabó o venció en los últimos 7 días"
+    override val shoppingAddPlaceholder = "Añadir un producto"
+    override val shoppingAdd = "Añadir"
+    override val shoppingShare = "Compartir lista"
+    override val shoppingEmptyTitle = "Tu lista está vacía"
+    override val shoppingEmptyHint =
+        "Cuando se te acabe o se venza algo, aparecerá aquí. También puedes añadir productos a mano."
+    override val shoppingReasonConsumed = "Se te acabó"
+    override val shoppingReasonExpired = "Se venció"
+    override val shoppingReasonManual = "Añadido por ti"
+    override val removeFromList = "Quitar de la lista"
+    override val shoppingShareTitle = "🛒 *Freshly - Lista de compras:*"
+    override val copiedToClipboard = "¡Lista copiada al portapapeles!"
+    override val shareError = "No se pudo compartir la lista."
 
     // ---- Common ----
     override val back = "Volver"

@@ -2,6 +2,8 @@ package com.ecoalacena.app.testing
 
 import com.ecoalacena.app.core.MILLIS_PER_DAY
 import com.ecoalacena.app.domain.model.Category
+import com.ecoalacena.app.domain.model.PantryEvent
+import com.ecoalacena.app.domain.model.PantryEventKind
 import com.ecoalacena.app.domain.model.PantryItem
 import com.ecoalacena.app.domain.repository.PantryRepository
 import kotlinx.coroutines.flow.Flow
@@ -35,6 +37,18 @@ class FakePantryRepository(initialItems: List<PantryItem> = emptyList()) : Pantr
 
     val items = MutableStateFlow(initialItems)
     val savedKg = MutableStateFlow(0.0)
+    val events = MutableStateFlow<List<PantryEvent>>(emptyList())
+
+    override suspend fun discard(item: PantryItem, discardedAtMillis: Long) {
+        items.value = items.value.filterNot { it.id == item.id }
+        events.value = listOf(item.toEvent(item.quantity, PantryEventKind.DISCARDED, discardedAtMillis)) + events.value
+    }
+
+    override fun observeEventsSince(sinceMillis: Long): Flow<List<PantryEvent>> =
+        events.map { list -> list.filter { it.happenedAt >= sinceMillis } }
+
+    private fun PantryItem.toEvent(quantity: Double, kind: PantryEventKind, at: Long) =
+        PantryEvent(name, category, quantity, unit, kind, at)
 
     override fun observeAll(): Flow<List<PantryItem>> = items
 
@@ -61,6 +75,7 @@ class FakePantryRepository(initialItems: List<PantryItem> = emptyList()) : Pantr
         val remaining = item.quantity - eaten
         items.value = items.value.filterNot { it.id == item.id } +
             listOfNotNull(item.copy(quantity = remaining).takeIf { remaining > 1e-6 })
+        events.value = listOf(item.toEvent(eaten, PantryEventKind.CONSUMED, consumedAtMillis)) + events.value
 
         val weightKg = item.copy(quantity = eaten).estimatedWeightKg()
         val wasExpired = item.expirationDate?.let { it < consumedAtMillis } ?: false

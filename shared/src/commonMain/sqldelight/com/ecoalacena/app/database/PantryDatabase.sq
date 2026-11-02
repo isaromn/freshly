@@ -54,3 +54,60 @@ VALUES (?, ?);
 selectTotalSavedKg:
 SELECT COALESCE(SUM(kg), 0.0)
 FROM savedFoodEntity;
+
+-- What happened to items that left the pantry (kind = 'CONSUMED' or 'DISCARDED'), so the shopping
+-- list can suggest buying them again.
+CREATE TABLE pantryEventEntity (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    quantity REAL NOT NULL,
+    unit TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    happenedAt INTEGER NOT NULL
+);
+
+-- Products the user added to the shopping list by hand.
+CREATE TABLE shoppingItemEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    addedAt INTEGER NOT NULL
+);
+
+-- Suggestions the user removed from the shopping list, by normalised name. A suggestion comes back
+-- only if the product is used up or expires again after it was dismissed.
+CREATE TABLE shoppingDismissalEntity (
+    nameKey TEXT NOT NULL PRIMARY KEY,
+    dismissedAt INTEGER NOT NULL
+);
+
+insertEvent:
+INSERT INTO pantryEventEntity(name, category, quantity, unit, kind, happenedAt)
+VALUES (?, ?, ?, ?, ?, ?);
+
+selectEventsSince:
+SELECT *
+FROM pantryEventEntity
+WHERE happenedAt >= :since
+ORDER BY happenedAt DESC;
+
+selectShoppingItems:
+SELECT *
+FROM shoppingItemEntity
+ORDER BY addedAt ASC;
+
+insertShoppingItem:
+INSERT OR REPLACE INTO shoppingItemEntity(id, name, addedAt)
+VALUES (?, ?, ?);
+
+deleteShoppingItem:
+DELETE FROM shoppingItemEntity
+WHERE id = ?;
+
+selectDismissals:
+SELECT *
+FROM shoppingDismissalEntity;
+
+insertDismissal:
+INSERT OR REPLACE INTO shoppingDismissalEntity(nameKey, dismissedAt)
+VALUES (?, ?);

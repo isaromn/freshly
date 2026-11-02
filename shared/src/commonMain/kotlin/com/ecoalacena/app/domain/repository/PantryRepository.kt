@@ -1,5 +1,6 @@
 package com.ecoalacena.app.domain.repository
 
+import com.ecoalacena.app.domain.model.PantryEvent
 import com.ecoalacena.app.domain.model.PantryItem
 import kotlinx.coroutines.flow.Flow
 
@@ -25,9 +26,15 @@ interface PantryRepository {
 
     suspend fun deleteById(id: String)
 
+    /** Removes [item] because it was thrown away, and records it so it can be bought again. */
+    suspend fun discard(item: PantryItem, discardedAtMillis: Long)
+
+    /** Items (or parts of them) that were eaten or thrown away since [sinceMillis], newest first. */
+    fun observeEventsSince(sinceMillis: Long): Flow<List<PantryEvent>>
+
     /**
      * Records that [quantity] of [item] was eaten (all of it by default). The item is removed when
-     * nothing is left, otherwise its quantity goes down. If it was still fresh and the weight of the
+     * nothing is left, otherwise its quantity goes down. The eaten part is kept in the history. If it was still fresh and the weight of the
      * eaten part can be estimated, that weight is added to the "waste avoided" total.
      *
      * @return the kilograms added to the "waste avoided" total (0 when nothing was counted).

@@ -6,6 +6,7 @@ import com.ecoalacena.app.core.i18n.AppLanguage
 import com.ecoalacena.app.core.i18n.EnglishStrings
 import com.ecoalacena.app.core.i18n.SpanishStrings
 import com.ecoalacena.app.domain.model.Category
+import com.ecoalacena.app.domain.model.PantryEvent
 import com.ecoalacena.app.domain.model.PantryItem
 import com.ecoalacena.app.domain.repository.PantryRepository
 import kotlin.test.AfterTest
@@ -20,6 +21,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -423,6 +425,12 @@ private class FakePantryRepository(initialItems: List<PantryItem> = emptyList())
     override suspend fun deleteById(id: String) {
         items.value = items.value.filterNot { it.id == id }
     }
+
+    override suspend fun discard(item: PantryItem, discardedAtMillis: Long) {
+        deleteById(item.id)
+    }
+
+    override fun observeEventsSince(sinceMillis: Long): Flow<List<PantryEvent>> = flowOf(emptyList())
 
     override suspend fun markConsumed(item: PantryItem, consumedAtMillis: Long, quantity: Double): Double {
         items.value = items.value.filterNot { it.id == item.id }

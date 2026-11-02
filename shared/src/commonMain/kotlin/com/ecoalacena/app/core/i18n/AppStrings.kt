@@ -20,6 +20,21 @@ interface AppStrings {
     val tabScannerShort: String
     val tabRecipesShort: String
     val tabImpactShort: String
+    val tabShopping: String
+    val tabShoppingShort: String
+    val shoppingSubtitle: String
+    val shoppingAddPlaceholder: String
+    val shoppingAdd: String
+    val shoppingShare: String
+    val shoppingEmptyTitle: String
+    val shoppingEmptyHint: String
+    val shoppingReasonConsumed: String
+    val shoppingReasonExpired: String
+    val shoppingReasonManual: String
+    val removeFromList: String
+    val shoppingShareTitle: String
+    val copiedToClipboard: String
+    val shareError: String
 
     // ---- Common ----
     val back: String

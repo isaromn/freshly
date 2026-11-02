@@ -190,13 +190,16 @@ class PantryViewModel(
         }
     }
 
-    /** The item was thrown away: it is removed and nothing is added to the impact. */
+    /**
+     * The item was thrown away: it is removed, nothing is added to the impact, and it is kept in the
+     * history so the shopping list can suggest it.
+     */
     private fun discardItem(itemId: String) {
         val ui = findItem(itemId) ?: return
         activeDialog.value = null
 
         launchSafely(error = { discardError }) {
-            repository.deleteById(ui.item.id)
+            repository.discard(ui.item, nowMillis())
             sendEffect(PantryEffect.ShowMessage(strings().discardedMessage(ui.item.name)))
         }
     }

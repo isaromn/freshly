@@ -8,18 +8,23 @@ import com.ecoalacena.app.data.remote.ai.geminiJson
 import com.ecoalacena.app.data.remote.image.UnsplashConfig
 import com.ecoalacena.app.data.remote.image.UnsplashPhotoFinder
 import com.ecoalacena.app.data.repository.PantryRepositoryImpl
+import com.ecoalacena.app.data.repository.ShoppingRepositoryImpl
 import com.ecoalacena.app.database.PantryDatabase
 import com.ecoalacena.app.domain.recipe.RecipePhotoFinder
 import com.ecoalacena.app.domain.repository.PantryRepository
+import com.ecoalacena.app.domain.repository.ShoppingRepository
 import com.ecoalacena.app.domain.usecase.AnalyzeFoodUseCase
 import com.ecoalacena.app.domain.usecase.CalculateImpactUseCase
 import com.ecoalacena.app.domain.usecase.ConsumeRecipeIngredientsUseCase
 import com.ecoalacena.app.domain.usecase.EstimateExpirationDateUseCase
 import com.ecoalacena.app.domain.usecase.GetHybridRecipeUseCase
+import com.ecoalacena.app.domain.usecase.GetShoppingListUseCase
+import com.ecoalacena.app.platform.ShareService
 import com.ecoalacena.app.presentation.impact.ImpactViewModel
 import com.ecoalacena.app.presentation.pantry.PantryViewModel
 import com.ecoalacena.app.presentation.recipes.RecipeViewModel
 import com.ecoalacena.app.presentation.scan.ScanViewModel
+import com.ecoalacena.app.presentation.shopping.ShoppingViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -38,6 +43,7 @@ val appModule = module {
     // Local persistence (single source of truth)
     single { PantryDatabase(get<DatabaseDriverFactory>().createDriver()) }
     single<PantryRepository> { PantryRepositoryImpl(get()) }
+    single<ShoppingRepository> { ShoppingRepositoryImpl(get()) }
 
     // Networking: the engine is picked per platform (OkHttp on Android/Desktop, Darwin on iOS)
     single {
@@ -62,6 +68,9 @@ val appModule = module {
     factory { GetHybridRecipeUseCase(repository = get(), recipeService = get(), photoFinder = get()) }
     factory { ConsumeRecipeIngredientsUseCase(repository = get(), calculateImpact = get()) }
 
+    // Smart shopping list
+    factory { GetShoppingListUseCase(pantryRepository = get(), shoppingRepository = get()) }
+
     // Impact dashboard (SDG 12)
     factory { CalculateImpactUseCase() }
 
@@ -70,6 +79,7 @@ val appModule = module {
     viewModel { ScanViewModel(analyzeFood = get(), repository = get(), estimateExpiration = get()) }
     viewModel { RecipeViewModel(getRecipes = get(), repository = get(), consumeIngredients = get()) }
     viewModel { ImpactViewModel(repository = get(), calculateImpact = get()) }
+    viewModel { ShoppingViewModel(shoppingList = get(), shareText = get<ShareService>()::shareText) }
 }
 
 /**

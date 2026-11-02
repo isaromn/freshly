@@ -1,0 +1,21 @@
+-- Version 1 -> 2: history of items that left the pantry, and the shopping list.
+CREATE TABLE pantryEventEntity (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    quantity REAL NOT NULL,
+    unit TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    happenedAt INTEGER NOT NULL
+);
+
+CREATE TABLE shoppingItemEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    addedAt INTEGER NOT NULL
+);
+
+CREATE TABLE shoppingDismissalEntity (
+    nameKey TEXT NOT NULL PRIMARY KEY,
+    dismissedAt INTEGER NOT NULL
+);

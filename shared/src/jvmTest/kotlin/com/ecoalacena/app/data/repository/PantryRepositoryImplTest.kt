@@ -4,6 +4,8 @@ import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.ecoalacena.app.core.MILLIS_PER_DAY
 import com.ecoalacena.app.database.PantryDatabase
 import com.ecoalacena.app.domain.model.Category
+import com.ecoalacena.app.domain.model.ManualShoppingItem
+import com.ecoalacena.app.domain.model.PantryEventKind
 import com.ecoalacena.app.domain.model.PantryItem
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -62,6 +64,50 @@ class PantryRepositoryImplTest {
 
         assertEquals(0.0, savedKg)
         assertEquals(0.0, repository.observeSavedKg().first())
+    }
+
+    @Test
+    fun eatingAndThrowingAwayAreKeptInTheHistory() = runTest {
+        val milk = rice.copy(id = "milk", name = "Leche", unit = "l", category = Category.DAIRY)
+        repository.upsert(rice)
+        repository.upsert(milk)
+
+        repository.markConsumed(rice, NOW, quantity = 0.5)
+        repository.discard(milk, NOW + 1)
+
+        val events = repository.observeEventsSince(NOW - MILLIS_PER_DAY).first()
+        assertEquals(listOf(PantryEventKind.DISCARDED, PantryEventKind.CONSUMED), events.map { it.kind })
+        assertEquals(0.5, events.last().quantity)
+        assertNull(repository.observeById("milk").first())
+    }
+
+    @Test
+    fun aDatabaseFromVersionOneGetsTheShoppingTables() = runTest {
+        val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+        // The tables of version 1, as they were before the shopping list existed.
+        driver.execute(
+            null,
+            """
+            CREATE TABLE pantryItemEntity (
+                id TEXT NOT NULL PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL DEFAULT 'OTHER',
+                quantity REAL NOT NULL, unit TEXT NOT NULL, expirationDate INTEGER, isOrganic INTEGER NOT NULL DEFAULT 0
+            )
+            """.trimIndent(),
+            0,
+        )
+        driver.execute(
+            null,
+            "CREATE TABLE savedFoodEntity (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, kg REAL NOT NULL, savedAt INTEGER NOT NULL)",
+            0,
+        )
+
+        PantryDatabase.Schema.migrate(driver, 1, PantryDatabase.Schema.version)
+
+        val database = PantryDatabase(driver)
+        val shopping = ShoppingRepositoryImpl(database, Dispatchers.Unconfined)
+        shopping.addManualItem(ManualShoppingItem("1", "Café", NOW))
+        assertEquals(listOf("Café"), shopping.observeManualItems().first().map { it.name })
+        assertEquals(2L, PantryDatabase.Schema.version)
     }
 
     private companion object {
