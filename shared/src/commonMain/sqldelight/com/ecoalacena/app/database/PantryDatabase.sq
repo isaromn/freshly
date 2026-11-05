@@ -23,7 +23,9 @@ CREATE TABLE savedFoodEntity (
     kg REAL NOT NULL,
     savedAt INTEGER NOT NULL,
     -- Estimated kcal of the food that was eaten in time; NULL when unknown.
-    calories REAL
+    calories REAL,
+    -- Estimated grams of protein of that food; NULL when unknown.
+    proteinGrams REAL
 );
 
 selectAll:
@@ -58,8 +60,8 @@ WHERE expirationDate <= :threshold
 ORDER BY expirationDate ASC;
 
 insertSavedFood:
-INSERT INTO savedFoodEntity(kg, savedAt, calories)
-VALUES (?, ?, ?);
+INSERT INTO savedFoodEntity(kg, savedAt, calories, proteinGrams)
+VALUES (?, ?, ?, ?);
 
 selectTotalSavedKg:
 SELECT COALESCE(SUM(kg), 0.0)
@@ -67,6 +69,10 @@ FROM savedFoodEntity;
 
 selectTotalSavedCalories:
 SELECT COALESCE(SUM(calories), 0.0)
+FROM savedFoodEntity;
+
+selectTotalSavedProtein:
+SELECT COALESCE(SUM(proteinGrams), 0.0)
 FROM savedFoodEntity;
 
 -- What happened to items that left the pantry (kind = 'CONSUMED' or 'DISCARDED'), so the shopping

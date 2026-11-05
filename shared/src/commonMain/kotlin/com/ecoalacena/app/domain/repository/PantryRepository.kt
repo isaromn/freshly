@@ -24,6 +24,9 @@ interface PantryRepository {
     /** Emits the total estimated kcal of the food consumed before it expired (only items with calories). */
     fun observeSavedCalories(): Flow<Double>
 
+    /** Emits the total estimated grams of protein of that food (only items whose protein is known). */
+    fun observeSavedProteinGrams(): Flow<Double>
+
     /** Inserts the item, or replaces it if one with the same id already exists. */
     suspend fun upsert(item: PantryItem)
 

@@ -24,8 +24,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Park
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material3.Card
@@ -73,6 +75,18 @@ private val ON_CALORIES_CONTAINER_LIGHT = Color(0xFF5C2600)
 private val CALORIES_CONTAINER_DARK = Color(0xFF4F2A10)
 private val ON_CALORIES_CONTAINER_DARK = Color(0xFFFFD2AE)
 
+// Meals tone: mint.
+private val MEALS_CONTAINER_LIGHT = Color(0xFFCDF3E4)
+private val ON_MEALS_CONTAINER_LIGHT = Color(0xFF00382A)
+private val MEALS_CONTAINER_DARK = Color(0xFF12483A)
+private val ON_MEALS_CONTAINER_DARK = Color(0xFFB4F0DA)
+
+// Protein tone: blue violet.
+private val PROTEIN_CONTAINER_LIGHT = Color(0xFFDFE0FF)
+private val ON_PROTEIN_CONTAINER_LIGHT = Color(0xFF1E2470)
+private val PROTEIN_CONTAINER_DARK = Color(0xFF2E3273)
+private val ON_PROTEIN_CONTAINER_DARK = Color(0xFFDADCFF)
+
 /** Daily energy reference for an adult, used on food labels. */
 private const val KCAL_PER_DAY = 2_000.0
 
@@ -88,6 +102,12 @@ private enum class MetricTone {
 
     /** Warm orange, only for calories, so they don't look like the money card. */
     CALORIES,
+
+    /** Mint, for the plates of food saved. */
+    MEALS,
+
+    /** Blue violet, for protein. */
+    PROTEIN,
 }
 
 private class ToneColors(
@@ -107,6 +127,16 @@ private fun MetricTone.colors(): ToneColors {
             ToneColors(CALORIES_CONTAINER_DARK, ON_CALORIES_CONTAINER_DARK)
         } else {
             ToneColors(CALORIES_CONTAINER_LIGHT, ON_CALORIES_CONTAINER_LIGHT)
+        }
+        MetricTone.MEALS -> if (scheme.background.luminance() < 0.5f) {
+            ToneColors(MEALS_CONTAINER_DARK, ON_MEALS_CONTAINER_DARK)
+        } else {
+            ToneColors(MEALS_CONTAINER_LIGHT, ON_MEALS_CONTAINER_LIGHT)
+        }
+        MetricTone.PROTEIN -> if (scheme.background.luminance() < 0.5f) {
+            ToneColors(PROTEIN_CONTAINER_DARK, ON_PROTEIN_CONTAINER_DARK)
+        } else {
+            ToneColors(PROTEIN_CONTAINER_LIGHT, ON_PROTEIN_CONTAINER_LIGHT)
         }
     }
 }
@@ -195,21 +225,57 @@ private fun ImpactContent(
                 )
             }
 
-            // One more cell of the metrics grid, next to money, food and CO2e.
+            item(key = "nutrition_header", span = { GridItemSpan(maxLineSpan) }) {
+                Text(
+                    text = strings.nutritionSectionTitle,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+
             item(key = "calories") {
-                val animatedCalories = rememberAnimatedValue(state.savedCalories)
+                val animatedCalories = rememberAnimatedValue(metrics.savedCalories.toDouble())
                 MetricCard(
                     icon = Icons.Filled.LocalFireDepartment,
                     title = strings.caloriesSavedTitle,
                     value = formatGrouped(animatedCalories.toLong(), strings.groupSeparator()),
                     unit = "kcal",
-                    explanation = if (state.savedCalories > 0.0) {
+                    explanation = if (metrics.savedCalories > 0) {
                         strings.nutritionSummaryHint + ". " +
-                            strings.caloriesDaysEquivalent(formatDecimal(state.savedCalories / KCAL_PER_DAY, 1))
+                            strings.caloriesDaysEquivalent(formatDecimal(metrics.savedCalories / KCAL_PER_DAY, 1))
                     } else {
                         strings.nutritionSummaryEmpty
                     },
                     tone = MetricTone.CALORIES,
+                )
+            }
+
+            item(key = "meals") {
+                val animatedMeals = rememberAnimatedValue(metrics.savedMeals.toDouble())
+                MetricCard(
+                    icon = Icons.Filled.Restaurant,
+                    title = strings.mealsSavedTitle,
+                    value = formatGrouped(animatedMeals.toLong(), strings.groupSeparator()),
+                    unit = strings.mealsUnit,
+                    explanation = strings.explainMeals,
+                    tone = MetricTone.MEALS,
+                )
+            }
+
+            item(key = "protein") {
+                val animatedProtein = rememberAnimatedValue(metrics.savedProteinGrams)
+                MetricCard(
+                    icon = Icons.Filled.FitnessCenter,
+                    title = strings.proteinSavedTitle,
+                    value = formatGrouped(animatedProtein.toLong(), strings.groupSeparator()),
+                    unit = strings.proteinUnit,
+                    explanation = if (metrics.savedProteinGrams > 0.0) {
+                        strings.explainProtein
+                    } else {
+                        strings.nutritionSummaryEmpty
+                    },
+                    tone = MetricTone.PROTEIN,
                 )
             }
 

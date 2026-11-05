@@ -20,13 +20,13 @@ class ImpactViewModel(
     val state: StateFlow<ImpactState> = combine(
         repository.observeSavedKg(),
         repository.observeSavedCalories(),
+        repository.observeSavedProteinGrams(),
         selectedCurrency,
-    ) { savedKg, savedCalories, currency ->
+    ) { savedKg, savedCalories, savedProteinGrams, currency ->
         ImpactState(
             isLoading = false,
-            metrics = calculateImpact(savedKg),
+            metrics = calculateImpact(savedKg, savedCalories, savedProteinGrams),
             currency = currency,
-            savedCalories = savedCalories,
         )
     }.stateIn(
         scope = viewModelScope,

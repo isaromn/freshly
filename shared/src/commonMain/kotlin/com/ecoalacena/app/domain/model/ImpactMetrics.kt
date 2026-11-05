@@ -10,6 +10,12 @@ data class ImpactMetrics(
     val treesEquivalent: Double,
     /** Kilometres a typical car would drive to emit the avoided CO2e. */
     val carKmEquivalent: Double,
+    /** Estimated kcal of that food (only items whose calories are known). */
+    val savedCalories: Int = 0,
+    /** Estimated prepared plates that food makes. */
+    val savedMeals: Int = 0,
+    /** Estimated grams of protein of that food (only items whose protein is known). */
+    val savedProteinGrams: Double = 0.0,
 ) {
     companion object {
         val EMPTY = ImpactMetrics(

@@ -111,7 +111,7 @@ class PantryRepositoryImplTest {
         val pantry = PantryRepositoryImpl(database, Dispatchers.Unconfined)
         pantry.upsert(rice.copy(caloriesPerUnit = 130))
         assertEquals(130, pantry.observeById("rice").first()?.caloriesPerUnit)
-        assertEquals(3L, PantryDatabase.Schema.version)
+        assertEquals(4L, PantryDatabase.Schema.version)
     }
 
     @Test
@@ -133,6 +133,7 @@ class PantryRepositoryImplTest {
 
         // Two apples of 95 kcal; the two left keep their nutrition.
         assertEquals(190.0, repository.observeSavedCalories().first())
+        assertEquals(1.0, repository.observeSavedProteinGrams().first())
         assertEquals(95, repository.observeById("apples").first()?.caloriesPerUnit)
     }
 

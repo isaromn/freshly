@@ -95,14 +95,18 @@ data class PantryItem(
         }
 
     /** Estimated kcal of the whole item ([quantity] of it), or `null` when the calories are unknown. */
-    fun totalCalories(): Double? {
-        val perUnit = caloriesPerUnit ?: return null
-        return when (unit.lowercase()) {
-            "kg", "l" -> quantity * 10 * perUnit
-            "g", "ml" -> quantity / 100 * perUnit
-            else -> quantity * perUnit
+    fun totalCalories(): Double? = caloriesPerUnit?.let { it * nutritionBasisCount() }
+
+    /** Estimated grams of protein of the whole item, or `null` when the protein is unknown. */
+    fun totalProteinGrams(): Double? = proteinGrams?.let { it * nutritionBasisCount() }
+
+    /** How many times [nutritionBasis] fits in [quantity]: 1 kg holds ten portions of 100 g. */
+    private fun nutritionBasisCount(): Double =
+        when (unit.lowercase()) {
+            "kg", "l" -> quantity * 10
+            "g", "ml" -> quantity / 100
+            else -> quantity
         }
-    }
 
     /**
      * Rough weight in kilograms, or `null` when the unit is not recognised.

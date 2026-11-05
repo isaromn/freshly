@@ -1,6 +1,7 @@
 package com.ecoalacena.app.domain.usecase
 
 import com.ecoalacena.app.domain.model.ImpactMetrics
+import kotlin.math.roundToInt
 
 /**
  * Converts kilograms of food saved from waste into money, CO2e and everyday equivalences.
@@ -9,7 +10,11 @@ import com.ecoalacena.app.domain.model.ImpactMetrics
  */
 class CalculateImpactUseCase {
 
-    operator fun invoke(savedKg: Double): ImpactMetrics {
+    operator fun invoke(
+        savedKg: Double,
+        savedCalories: Double = 0.0,
+        savedProteinGrams: Double = 0.0,
+    ): ImpactMetrics {
         val kg = savedKg.coerceAtLeast(0.0)
         val co2Kg = kg * CO2E_KG_PER_KG_FOOD
         val copSaved = kg * AVERAGE_PRICE_COP_PER_KG
@@ -21,6 +26,9 @@ class CalculateImpactUseCase {
             co2AvoidedKg = co2Kg,
             treesEquivalent = co2Kg / CO2_KG_ABSORBED_PER_TREE_YEAR,
             carKmEquivalent = co2Kg / CO2_KG_PER_CAR_KM,
+            savedCalories = savedCalories.coerceAtLeast(0.0).roundToInt(),
+            savedMeals = (kg * MEALS_PER_KG_FOOD).roundToInt(),
+            savedProteinGrams = savedProteinGrams.coerceAtLeast(0.0),
         )
     }
 
@@ -39,5 +47,8 @@ class CalculateImpactUseCase {
 
         /** EPA: a typical passenger vehicle emits about 404 g of CO2 per mile (~0.251 kg/km). */
         const val CO2_KG_PER_CAR_KM = 0.251
+
+        /** Rough estimate: 1 kg of food makes about 2.5 prepared plates (400 g each). */
+        const val MEALS_PER_KG_FOOD = 2.5
     }
 }

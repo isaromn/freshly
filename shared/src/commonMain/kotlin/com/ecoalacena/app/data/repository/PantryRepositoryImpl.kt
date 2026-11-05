@@ -57,6 +57,11 @@ class PantryRepositoryImpl(
             .asFlow()
             .mapToOne(dispatcher)
 
+    override fun observeSavedProteinGrams(): Flow<Double> =
+        queries.selectTotalSavedProtein()
+            .asFlow()
+            .mapToOne(dispatcher)
+
     override suspend fun upsert(item: PantryItem) {
         withContext(dispatcher) {
             queries.insertItem(item)
@@ -127,7 +132,12 @@ class PantryRepositoryImpl(
                 val weightKg = eatenPart.estimatedWeightKg()
                 val wasExpired = item.expirationDate?.let { it < consumedAtMillis } ?: false
                 if (weightKg != null && weightKg > 0.0 && !wasExpired) {
-                    queries.insertSavedFood(weightKg, consumedAtMillis, eatenPart.totalCalories())
+                    queries.insertSavedFood(
+                        weightKg,
+                        consumedAtMillis,
+                        eatenPart.totalCalories(),
+                        eatenPart.totalProteinGrams(),
+                    )
                     weightKg
                 } else {
                     0.0

@@ -35,6 +35,15 @@ class CalculateImpactUseCaseTest {
     }
 
     @Test
+    fun estimatesServingsAndKeepsTheNutritionTotals() {
+        val metrics = calculateImpact(2.0, savedCalories = 1450.4, savedProteinGrams = 65.5)
+
+        assertEquals(5, metrics.savedMeals)
+        assertEquals(1450, metrics.savedCalories)
+        assertEquals(65.5, metrics.savedProteinGrams)
+    }
+
+    @Test
     fun impactGrowsLinearlyWithKilograms() {
         val one = calculateImpact(1.0)
         val four = calculateImpact(4.0)

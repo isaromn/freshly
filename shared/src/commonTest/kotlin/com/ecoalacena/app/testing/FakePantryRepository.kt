@@ -39,7 +39,11 @@ class FakePantryRepository(initialItems: List<PantryItem> = emptyList()) : Pantr
     val savedKg = MutableStateFlow(0.0)
     val savedCalories = MutableStateFlow(0.0)
 
+    val savedProteinGrams = MutableStateFlow(0.0)
+
     override fun observeSavedCalories(): Flow<Double> = savedCalories
+
+    override fun observeSavedProteinGrams(): Flow<Double> = savedProteinGrams
     val events = MutableStateFlow<List<PantryEvent>>(emptyList())
 
     override suspend fun discard(item: PantryItem, discardedAtMillis: Long) {
@@ -85,6 +89,7 @@ class FakePantryRepository(initialItems: List<PantryItem> = emptyList()) : Pantr
         if (weightKg == null || weightKg <= 0.0 || wasExpired) return 0.0
         savedKg.value += weightKg
         savedCalories.value += item.copy(quantity = eaten).totalCalories() ?: 0.0
+        savedProteinGrams.value += item.copy(quantity = eaten).totalProteinGrams() ?: 0.0
         return weightKg
     }
 }

@@ -1,0 +1,2 @@
+-- Version 3 -> 4: protein of the food eaten in time.
+ALTER TABLE savedFoodEntity ADD COLUMN proteinGrams REAL;

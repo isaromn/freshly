@@ -11,8 +11,6 @@ data class ImpactState(
     val isLoading: Boolean = true,
     val metrics: ImpactMetrics = ImpactMetrics.EMPTY,
     val currency: ImpactCurrency = ImpactCurrency.COP,
-    /** Estimated kcal of the food eaten before it expired (only items whose calories are known). */
-    val savedCalories: Double = 0.0,
 )
 
 sealed interface ImpactIntent {

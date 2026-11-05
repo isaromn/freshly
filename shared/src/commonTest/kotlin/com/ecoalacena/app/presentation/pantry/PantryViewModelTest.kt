@@ -436,6 +436,8 @@ private class FakePantryRepository(initialItems: List<PantryItem> = emptyList())
 
     override fun observeSavedCalories(): Flow<Double> = flowOf(0.0)
 
+    override fun observeSavedProteinGrams(): Flow<Double> = flowOf(0.0)
+
     override suspend fun upsert(item: PantryItem) {
         items.value = items.value.filterNot { it.id == item.id } + item
     }

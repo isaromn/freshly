@@ -44,6 +44,22 @@ class ImpactViewModelTest {
     }
 
     @Test
+    fun nutritionMetricsFollowWhatWasEaten() = runTest {
+        val viewModel = ImpactViewModel(repository, CalculateImpactUseCase())
+        val cheese = testItem("cheese", "Queso", expiresInDays = 10, quantity = 0.5).copy(
+            caloriesPerUnit = 264,
+            proteinGrams = 17f,
+        )
+
+        repository.markConsumed(cheese, TEST_NOW)
+
+        val metrics = viewModel.state.value.metrics
+        assertEquals(1320, metrics.savedCalories)
+        assertEquals(85.0, metrics.savedProteinGrams)
+        assertEquals(1, metrics.savedMeals)
+    }
+
+    @Test
     fun metricsFollowTheSavedKilograms() {
         val viewModel = ImpactViewModel(repository, CalculateImpactUseCase())
 
