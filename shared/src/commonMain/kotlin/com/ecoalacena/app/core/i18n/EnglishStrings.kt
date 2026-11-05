@@ -230,7 +230,11 @@ object EnglishStrings : AppStrings {
     override val geminiNoConnection = "No internet connection. Check your network and try again."
 
     // ---- Recipes ----
-    override val recipesSubtitle = "Cook what expires first"
+    override val recipesSubtitle = "Ideas from what is in your pantry"
+    override val modeExpiringSoon = "⚠️ Use what expires"
+    override val modeAvailablePantry = "🧺 Cook with what I have"
+    override val modeExpiringSoonHint = "Zero-waste recipes with the items closest to expiring."
+    override val modeAvailablePantryHint = "Recipes that combine as much as possible of what you have."
 
     override fun usingIngredients(names: String) = "Using: $names"
 

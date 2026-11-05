@@ -165,6 +165,10 @@ interface AppStrings {
 
     // ---- Recipes ----
     val recipesSubtitle: String
+    val modeExpiringSoon: String
+    val modeAvailablePantry: String
+    val modeExpiringSoonHint: String
+    val modeAvailablePantryHint: String
     fun usingIngredients(names: String): String
     val recipesLoading: String
     val recipesEmptyTitle: String

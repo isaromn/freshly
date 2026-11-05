@@ -11,6 +11,7 @@ import com.ecoalacena.app.domain.model.PantryItem
 import com.ecoalacena.app.domain.model.Recipe
 import com.ecoalacena.app.domain.model.RecipeCategory
 import com.ecoalacena.app.domain.model.RecipeDifficulty
+import com.ecoalacena.app.domain.model.RecipeMode
 import com.ecoalacena.app.domain.model.RecipeSource
 import com.ecoalacena.app.domain.recipe.LocalRecipeEngine
 import com.ecoalacena.app.domain.recipe.RecipePhotoFinder
@@ -37,9 +38,10 @@ data class HybridRecipeResult(
 )
 
 /**
- * Hybrid recipe engine. It takes the items closest to expiring from the pantry, asks Gemini
- * for a recipe, and always adds recipes from the offline [LocalRecipeEngine]. If Gemini
- * is unavailable (no network, no key, quota) the user still gets local suggestions.
+ * Hybrid recipe engine. It picks ingredients from the pantry according to the [RecipeMode] (the few
+ * items closest to expiring, or everything that is still good), asks Gemini for a recipe, and always
+ * adds recipes from the offline [LocalRecipeEngine]. If Gemini is unavailable (no network, no key,
+ * quota) the user still gets local suggestions.
  *
  * Every recipe, from the AI or from the offline templates, is written in the language of the device
  * (`es` or `en`). The language is read once per request and passed down to [GeminiRecipeService] and
@@ -57,47 +59,56 @@ class GetHybridRecipeUseCase(
 ) {
 
     /**
-     * Picks the ingredients to cook with: items that expire within a few days, or, if there
-     * are none, any item that has not expired yet. Most urgent first.
+     * Picks the ingredients to cook with, most urgent first, never expired ones:
+     * - [RecipeMode.EXPIRING_SOON]: up to 5 items that expire within 3 days (or, if none does, the
+     *   closest to expiring);
+     * - [RecipeMode.AVAILABLE_PANTRY]: every item still good, up to 20.
      */
-    suspend fun selectIngredients(): List<PantryItem> {
+    suspend fun selectIngredients(mode: RecipeMode = RecipeMode.EXPIRING_SOON): List<PantryItem> {
         val now = nowMillis()
-
-        val expiringSoon = repository
-            .observeExpiringSoon(now + EXPIRING_WINDOW_DAYS * MILLIS_PER_DAY)
-            .first()
+        val available = repository.observeAll().first()
             .filter { it.isNotExpired(now) }
-
-        val pool = expiringSoon.ifEmpty {
-            repository.observeAll().first().filter { it.isNotExpired(now) }
-        }
-
-        return pool
             .sortedWith(compareBy<PantryItem, Long?>(nullsLast<Long>()) { it.expirationDate })
-            .take(MAX_INGREDIENTS)
+
+        return when (mode) {
+            // The most urgent few (red or yellow in the pantry). With nothing about to expire, the
+            // closest dates are used, so there is always something to cook.
+            RecipeMode.EXPIRING_SOON -> {
+                val threshold = now + EXPIRING_WINDOW_DAYS * MILLIS_PER_DAY
+                available
+                    .filter { item -> item.expirationDate != null && item.expirationDate <= threshold }
+                    .ifEmpty { available }
+                    .take(MAX_EXPIRING_INGREDIENTS)
+            }
+
+            // Everything that is still good, most urgent first, capped to keep the prompt short.
+            RecipeMode.AVAILABLE_PANTRY -> available.take(MAX_PANTRY_INGREDIENTS)
+        }
     }
 
     /**
      * @param outputLanguage language of the AI recipe; the device language by default.
      */
     suspend operator fun invoke(
+        mode: RecipeMode = RecipeMode.EXPIRING_SOON,
         outputLanguage: AppLanguage = language(),
     ): Result<HybridRecipeResult> =
         try {
-            Result.success(buildSuggestions(outputLanguage))
+            Result.success(buildSuggestions(mode, outputLanguage))
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Exception) {
             Result.failure(error)
         }
 
-    private suspend fun buildSuggestions(outputLanguage: AppLanguage): HybridRecipeResult {
-        val ingredients = selectIngredients()
+    private suspend fun buildSuggestions(mode: RecipeMode, outputLanguage: AppLanguage): HybridRecipeResult {
+        val ingredients = selectIngredients(mode)
         if (ingredients.isEmpty()) throw EmptyPantryException()
 
         val now = nowMillis()
         val aiResult = recipeService.generateRecipe(
             ingredientLines = ingredients.map { it.toPromptLine(now) },
+            mode = mode,
             outputLanguage = outputLanguage,
         )
         // The AI recipe is built from every selected ingredient.
@@ -195,7 +206,8 @@ class GetHybridRecipeUseCase(
 
     private companion object {
         const val EXPIRING_WINDOW_DAYS = 3L
-        const val MAX_INGREDIENTS = 8
+        const val MAX_EXPIRING_INGREDIENTS = 5
+        const val MAX_PANTRY_INGREDIENTS = 20
         const val MAX_NAME_LENGTH = 60
         const val MAX_PREP_MINUTES = 600
         const val LOCAL_RECIPES_WITH_AI = 2

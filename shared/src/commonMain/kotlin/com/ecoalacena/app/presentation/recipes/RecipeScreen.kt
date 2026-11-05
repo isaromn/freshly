@@ -108,6 +108,14 @@ private fun RecipeContent(
                 )
             }
 
+            item(key = "mode", span = { GridItemSpan(maxLineSpan) }) {
+                RecipeModeSelector(
+                    selected = state.selectedMode,
+                    enabled = state.status != RecipeStatus.LOADING,
+                    onSelect = { mode -> onIntent(RecipeIntent.SelectRecipeMode(mode)) },
+                )
+            }
+
             if (state.usedIngredients.isNotEmpty()) {
                 item(key = "ingredients", span = { GridItemSpan(maxLineSpan) }) {
                     Text(

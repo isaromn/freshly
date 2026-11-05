@@ -4,6 +4,7 @@ import com.ecoalacena.app.core.i18n.AppLanguage
 import com.ecoalacena.app.core.i18n.SpanishStrings
 import com.ecoalacena.app.data.remote.ai.GeminiConfig
 import com.ecoalacena.app.data.remote.ai.GeminiRecipeService
+import com.ecoalacena.app.domain.model.RecipeMode
 import com.ecoalacena.app.domain.model.RecipeSource
 import com.ecoalacena.app.domain.usecase.ConsumeRecipeIngredientsUseCase
 import com.ecoalacena.app.domain.usecase.GetHybridRecipeUseCase
@@ -194,6 +195,26 @@ class RecipeViewModelTest {
         assertNull(viewModel.state.value.completion)
         assertEquals("local-vegetable-soup", viewModel.state.value.selectedRecipe?.id)
         assertEquals(2, repository.items.value.size)
+    }
+
+    @Test
+    fun switchingModeReloadsWithTheWholePantry() {
+        val viewModel = viewModelFor(
+            FakePantryRepository(
+                listOf(
+                    testItem("1", "Zanahoria", expiresInDays = 2),
+                    testItem("2", "Arroz", expiresInDays = 200),
+                ),
+            ),
+        )
+        viewModel.onIntent(RecipeIntent.Refresh)
+        assertEquals(RecipeMode.EXPIRING_SOON, viewModel.state.value.selectedMode)
+        assertEquals(listOf("Zanahoria"), viewModel.state.value.usedIngredients)
+
+        viewModel.onIntent(RecipeIntent.SelectRecipeMode(RecipeMode.AVAILABLE_PANTRY))
+
+        assertEquals(RecipeMode.AVAILABLE_PANTRY, viewModel.state.value.selectedMode)
+        assertEquals(listOf("Zanahoria", "Arroz"), viewModel.state.value.usedIngredients)
     }
 
     @Test

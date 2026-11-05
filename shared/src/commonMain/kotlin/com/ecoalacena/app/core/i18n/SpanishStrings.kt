@@ -228,7 +228,11 @@ object SpanishStrings : AppStrings {
     override val geminiNoConnection = "No hay conexión a internet. Revisa tu red e inténtalo de nuevo."
 
     // ---- Recipes ----
-    override val recipesSubtitle = "Cocina primero lo que vence primero"
+    override val recipesSubtitle = "Ideas con lo que hay en tu alacena"
+    override val modeExpiringSoon = "⚠️ Aprovechar por vencer"
+    override val modeAvailablePantry = "🧺 Cocinar con lo que hay"
+    override val modeExpiringSoonHint = "Recetas de desperdicio cero con lo que está por vencer."
+    override val modeAvailablePantryHint = "Recetas que combinan lo máximo posible de lo que tienes."
 
     override fun usingIngredients(names: String) = "Aprovechando: $names"
 

@@ -3,6 +3,7 @@ package com.ecoalacena.app.data.remote.ai
 import com.ecoalacena.app.core.i18n.AppLanguage
 import com.ecoalacena.app.core.i18n.currentLanguage
 import com.ecoalacena.app.domain.model.RecipeCategory
+import com.ecoalacena.app.domain.model.RecipeMode
 import io.ktor.client.HttpClient
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.serialization.Serializable
@@ -54,10 +55,11 @@ class GeminiRecipeService(
      */
     suspend fun generateRecipe(
         ingredientLines: List<String>,
+        mode: RecipeMode = RecipeMode.EXPIRING_SOON,
         outputLanguage: AppLanguage = language(),
     ): Result<GeminiRecipeResult> =
         try {
-            Result.success(requestRecipe(ingredientLines, outputLanguage))
+            Result.success(requestRecipe(ingredientLines, mode, outputLanguage))
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Exception) {
@@ -66,6 +68,7 @@ class GeminiRecipeService(
 
     private suspend fun requestRecipe(
         ingredientLines: List<String>,
+        mode: RecipeMode,
         outputLanguage: AppLanguage,
     ): GeminiRecipeResult {
         if (ingredientLines.isEmpty()) {
@@ -80,7 +83,7 @@ class GeminiRecipeService(
                 GeminiRequestContent(
                     role = "user",
                     parts = listOf(
-                        GeminiRequestPart(text = buildUserPrompt(ingredientLines, outputLanguage)),
+                        GeminiRequestPart(text = buildUserPrompt(ingredientLines, mode, outputLanguage)),
                     ),
                 ),
             ),
@@ -96,11 +99,22 @@ class GeminiRecipeService(
         return decodeGeminiJson<GeminiRecipeResult>(text)
     }
 
-    private fun buildUserPrompt(ingredientLines: List<String>, outputLanguage: AppLanguage): String =
-        "Available ingredients (most urgent first):\n" +
-            ingredientLines.joinToString(separator = "\n") +
-            "\n\nCreate one recipe and return the JSON. Write the title, the ingredients and the steps " +
-            "in ${outputLanguage.aiName}."
+    private fun buildUserPrompt(ingredientLines: List<String>, mode: RecipeMode, outputLanguage: AppLanguage): String {
+        val ingredients = ingredientLines.joinToString(separator = "\n")
+        val goal = when (mode) {
+            RecipeMode.EXPIRING_SOON ->
+                "MODE: ZERO WASTE. Create a zero-waste recipe whose main goal is to use ALL of these " +
+                    "ingredients that are about to expire (they are mandatory):\n$ingredients\n\n" +
+                    "You may complement them with basic seasonings."
+
+            RecipeMode.AVAILABLE_PANTRY ->
+                "MODE: COOK WITH WHAT THERE IS. Create a recipe that uses as many as possible of these " +
+                    "ingredients available in the pantry (most urgent first):\n$ingredients\n\n" +
+                    "Choose a dish that combines several of them well; you do not need to use all of them. " +
+                    "Avoid requiring ingredients that are not on the list."
+        }
+        return "$goal\n\nReturn the JSON. Write the title, the ingredients and the steps in ${outputLanguage.aiName}."
+    }
 
     private fun systemPrompt(outputLanguage: AppLanguage): String {
         val optionalMark = when (outputLanguage) {
@@ -115,7 +129,7 @@ class GeminiRecipeService(
         return """
             You are the recipe engine of Freshly, an app that helps people cook with food that is
             about to expire. You receive a list of pantry ingredients, the most urgent first, each with
-            its quantity and the time left before it expires.
+            its quantity and the time left before it expires, and a MODE that sets the goal.
 
             LANGUAGE
             - The device language of the user is ${outputLanguage.aiName} (code "${outputLanguage.code}").
@@ -128,8 +142,10 @@ class GeminiRecipeService(
               "imageQuery" in English.
 
             TASK
-            - Create ONE practical home recipe that uses as many of the listed ingredients as makes
-              sense, always including the most urgent ones.
+            - Create ONE practical home recipe that follows the MODE:
+              * ZERO WASTE: every listed ingredient is mandatory; build the dish around them.
+              * COOK WITH WHAT THERE IS: combine as many listed ingredients as make sense together,
+                giving priority to the most urgent ones.
             - You may assume basic staples are available: water, salt, pepper, cooking oil and sugar.
               Do not require any other ingredient; if you add an optional extra, mark it "$optionalMark".
             - Prefer simple recipes that take 45 minutes or less.

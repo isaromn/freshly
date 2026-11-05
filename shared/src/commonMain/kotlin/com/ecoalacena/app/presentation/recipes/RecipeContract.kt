@@ -3,6 +3,7 @@ package com.ecoalacena.app.presentation.recipes
 import com.ecoalacena.app.domain.model.ImpactMetrics
 import com.ecoalacena.app.domain.model.PantryItem
 import com.ecoalacena.app.domain.model.Recipe
+import com.ecoalacena.app.domain.model.RecipeMode
 
 enum class RecipeStatus {
     LOADING,
@@ -15,6 +16,8 @@ enum class RecipeStatus {
 
 data class RecipeState(
     val status: RecipeStatus = RecipeStatus.LOADING,
+    /** How the ingredients are chosen: what expires first, or everything available. */
+    val selectedMode: RecipeMode = RecipeMode.EXPIRING_SOON,
     /** The AI recipe first (when available), followed by local recipes. */
     val recipes: List<Recipe> = emptyList(),
     /** Names of the pantry items the recipes were built around. */
@@ -70,6 +73,9 @@ sealed interface RecipeIntent {
 
     /** Forces a new set of recipes. */
     data object Refresh : RecipeIntent
+
+    /** Switches between "use what expires first" and "cook with what there is", and reloads. */
+    data class SelectRecipeMode(val mode: RecipeMode) : RecipeIntent
     data class OpenRecipe(val recipeId: String) : RecipeIntent
 
     /** Goes back from the detail view to the list. */

@@ -6,6 +6,7 @@ import com.ecoalacena.app.core.i18n.AppLanguage
 import com.ecoalacena.app.core.i18n.AppStrings
 import com.ecoalacena.app.core.i18n.currentLanguage
 import com.ecoalacena.app.core.i18n.currentStrings
+import com.ecoalacena.app.domain.model.RecipeMode
 import com.ecoalacena.app.domain.model.localizedFoodName
 import com.ecoalacena.app.domain.repository.PantryRepository
 import com.ecoalacena.app.domain.usecase.ConsumeRecipeIngredientsUseCase
@@ -47,6 +48,7 @@ class RecipeViewModel(
         when (intent) {
             RecipeIntent.ScreenShown -> reloadIfPantryChanged()
             RecipeIntent.Refresh -> load()
+            is RecipeIntent.SelectRecipeMode -> selectMode(intent.mode)
             is RecipeIntent.OpenRecipe -> openRecipe(intent.recipeId)
             RecipeIntent.CloseRecipe -> _state.update { it.copy(selectedRecipeId = null) }
             is RecipeIntent.ToggleStep -> toggleStep(intent.recipeId, intent.stepIndex)
@@ -65,7 +67,7 @@ class RecipeViewModel(
     private fun reloadIfPantryChanged() {
         viewModelScope.launch {
             val currentIds = try {
-                getRecipes.selectIngredients().map { it.id }
+                getRecipes.selectIngredients(_state.value.selectedMode).map { it.id }
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (error: Exception) {
@@ -81,20 +83,28 @@ class RecipeViewModel(
         }
     }
 
+    private fun selectMode(mode: RecipeMode) {
+        if (mode == _state.value.selectedMode) return
+        _state.update { it.copy(selectedMode = mode, selectedRecipeId = null, completion = null) }
+        load()
+    }
+
     private fun load() {
         loadJob?.cancel()
         _state.update { it.copy(status = RecipeStatus.LOADING, errorMessage = null) }
 
         val outputLanguage = language()
         loadedLanguage = outputLanguage
+        val mode = _state.value.selectedMode
 
         loadJob = viewModelScope.launch {
-            getRecipes(outputLanguage).fold(
+            getRecipes(mode, outputLanguage).fold(
                 onSuccess = { result ->
                     val texts = strings()
                     loadedIngredientIds = result.ingredients.map { it.id }
                     _state.value = RecipeState(
                         status = RecipeStatus.CONTENT,
+                        selectedMode = mode,
                         recipes = result.recipes,
                         usedIngredients = result.ingredients.map { it.name.localizedFoodName(outputLanguage) },
                         aiNotice = result.aiFailure?.let { failure ->
@@ -109,11 +119,12 @@ class RecipeViewModel(
                 onFailure = { error ->
                     if (error is EmptyPantryException) {
                         loadedIngredientIds = emptyList()
-                        _state.value = RecipeState(status = RecipeStatus.EMPTY_PANTRY)
+                        _state.value = RecipeState(status = RecipeStatus.EMPTY_PANTRY, selectedMode = mode)
                     } else {
                         loadedIngredientIds = null
                         _state.value = RecipeState(
                             status = RecipeStatus.ERROR,
+                            selectedMode = mode,
                             errorMessage = strings().recipesLoadError,
                         )
                     }

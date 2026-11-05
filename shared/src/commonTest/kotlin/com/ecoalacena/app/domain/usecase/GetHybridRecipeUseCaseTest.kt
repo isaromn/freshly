@@ -8,6 +8,7 @@ import com.ecoalacena.app.data.remote.ai.GeminiRecipeService
 import com.ecoalacena.app.data.remote.ai.geminiJson
 import com.ecoalacena.app.domain.model.PantryItem
 import com.ecoalacena.app.domain.model.RecipeCategory
+import com.ecoalacena.app.domain.model.RecipeMode
 import com.ecoalacena.app.domain.model.RecipeSource
 import com.ecoalacena.app.domain.recipe.RecipePhoto
 import com.ecoalacena.app.domain.recipe.RecipePhotoFinder
@@ -221,6 +222,47 @@ class GetHybridRecipeUseCaseTest {
         val result = useCase().getOrThrow()
 
         assertEquals(listOf("Zanahoria"), result.ingredients.map { it.name })
+    }
+
+    @Test
+    fun zeroWasteModeTakesAtMostTheFiveMostUrgentItems() = runTest {
+        val useCase = useCaseFor(
+            *(1..7).map { day -> testItem("i$day", "Item $day", expiresInDays = (day % 3) + 1) }.toTypedArray(),
+            testItem("expired", "Vencido", expiresInDays = -1),
+        )
+
+        val ingredients = useCase(RecipeMode.EXPIRING_SOON).getOrThrow().ingredients
+
+        assertEquals(5, ingredients.size)
+        assertTrue(ingredients.none { it.id == "expired" })
+        // Most urgent first.
+        assertEquals(ingredients.sortedBy { it.expirationDate }, ingredients)
+    }
+
+    @Test
+    fun availablePantryModeUsesEverythingThatIsStillGood() = runTest {
+        val useCase = useCaseFor(
+            testItem("soon", "Zanahoria", expiresInDays = 2),
+            testItem("later", "Papa", expiresInDays = 10),
+            testItem("undated", "Arroz", expiresInDays = null),
+            testItem("expired", "Vencido", expiresInDays = -1),
+        )
+
+        val ingredients = useCase(RecipeMode.AVAILABLE_PANTRY).getOrThrow().ingredients
+
+        assertEquals(listOf("Zanahoria", "Papa", "Arroz"), ingredients.map { it.name })
+    }
+
+    @Test
+    fun thePromptFollowsTheMode() = runTest {
+        val prompts = mutableListOf<String>()
+        val useCase = useCaseFor(testItem("carrot", "Zanahoria", expiresInDays = 2), onRequest = { prompts += it })
+
+        useCase(RecipeMode.EXPIRING_SOON)
+        useCase(RecipeMode.AVAILABLE_PANTRY)
+
+        assertTrue("ZERO WASTE" in prompts[0] && "mandatory" in prompts[0])
+        assertTrue("COOK WITH WHAT THERE IS" in prompts[1] && "as many as possible" in prompts[1])
     }
 
     @Test
