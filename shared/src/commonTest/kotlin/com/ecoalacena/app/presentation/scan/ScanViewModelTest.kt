@@ -204,6 +204,24 @@ class ScanViewModelTest {
         )
     }
 
+    @Test
+    fun anOldReceiptShowsItsAgeAndKeepsItsExpiredFoodOutOfThePantry() = runTest {
+        // TEST_NOW is 2023-11-14; the receipt is from 30 days earlier.
+        val viewModel = viewModelScanning(
+            """{"receiptDate":"2023-10-15","items":[""" +
+                """{"name":"Leche","category":"DAIRY","quantity":1,"unit":"l","estimatedDaysUntilExpiration":7,"confidence":0.9},""" +
+                """{"name":"Arroz","category":"PANTRY_STAPLE","quantity":1,"unit":"kg","estimatedDaysUntilExpiration":365,"confidence":0.9}]}""",
+        )
+
+        viewModel.onIntent(ScanIntent.ImageSelected(ScanImage(byteArrayOf(1), "image/jpeg")))
+        val state = viewModel.state.first { it.status == ScanStatus.REVIEW }
+
+        assertEquals(30, state.oldReceiptAgeDays(TEST_NOW))
+        assertEquals(listOf("Leche"), state.spoiledDrafts.map { it.name })
+        assertEquals(SpanishStrings.expiredByReceiptDate("22/10/2023"), state.spoiledDrafts.single().spoilageReason)
+        assertEquals(listOf("Arroz"), state.freshDrafts.map { it.name })
+    }
+
     /** A view model whose scanner answers [modelJson], as Gemini would. */
     private fun viewModelScanning(modelJson: String): ScanViewModel {
         val escaped = modelJson.replace("\"", "\\\"")

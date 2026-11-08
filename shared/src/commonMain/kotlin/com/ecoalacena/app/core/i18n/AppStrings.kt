@@ -48,6 +48,9 @@ interface AppStrings {
     val moneyWastedTitle: String
     fun explainMoneyWasted(kg: String, pricePerKg: String): String
     val spoiledTitle: String
+    fun oldReceiptTitle(date: String, ageDays: Int): String
+    fun oldReceiptBody(expiredCount: Int): String
+    fun expiredByReceiptDate(date: String): String
     fun ecoAlternative(tip: String): String
     val spoiledDefaultTip: String
     val registerAsCompost: String

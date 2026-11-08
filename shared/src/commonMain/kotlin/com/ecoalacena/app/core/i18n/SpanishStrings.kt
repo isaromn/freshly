@@ -60,6 +60,14 @@ object SpanishStrings : AppStrings {
     override fun explainMoneyWasted(kg: String, pricePerKg: String) =
         "$kg kg de comida botada (vencida o dañada), a un precio medio de COP $pricePerKg por kg."
     override val spoiledTitle = "⚠️ Alimento no apto para consumo"
+    override fun oldReceiptTitle(date: String, ageDays: Int) = "Recibo antiguo: es del $date (hace $ageDays días)"
+    override fun oldReceiptBody(expiredCount: Int) =
+        "Calculamos las fechas de caducidad desde el día de la compra. " + when (expiredCount) {
+            0 -> "Revisa que todo siga en buen estado antes de agregarlo."
+            1 -> "1 producto ya venció: no se agregará a tu alacena."
+            else -> "$expiredCount productos ya vencieron: no se agregarán a tu alacena."
+        }
+    override fun expiredByReceiptDate(date: String) = "Venció el $date, según la fecha del recibo."
     override fun ecoAlternative(tip: String) = "🌿 Alternativa ecológica: $tip"
     override val spoiledDefaultTip = "Llévalo al compost o a la caneca de residuos orgánicos."
     override val registerAsCompost = "Registrar como desperdiciado (compost)"

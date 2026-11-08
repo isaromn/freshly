@@ -442,6 +442,16 @@ private fun ReviewContent(
                 }
             }
 
+            state.oldReceiptAgeDays(now)?.let { ageDays ->
+                item(key = "old-receipt") {
+                    OldReceiptWarning(
+                        receiptDate = state.receiptDate ?: now,
+                        ageDays = ageDays,
+                        expiredCount = state.spoiledDrafts.size,
+                    )
+                }
+            }
+
             items(state.spoiledDrafts, key = { it.id }) { draft ->
                 SpoiledItemCard(
                     item = draft,

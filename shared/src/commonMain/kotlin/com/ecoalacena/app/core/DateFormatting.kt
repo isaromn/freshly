@@ -37,5 +37,27 @@ fun formatDate(epochMillis: Long, language: AppLanguage): String {
     }
 }
 
+/**
+ * Midnight (UTC) of a `YYYY-MM-DD` date, or `null` when the text is not a valid date.
+ * The inverse of [civilDateOf] (Howard Hinnant's algorithm).
+ */
+fun parseIsoDate(text: String): Long? {
+    val parts = text.trim().split('-')
+    if (parts.size != 3) return null
+    val year = parts[0].toIntOrNull() ?: return null
+    val month = parts[1].toIntOrNull()?.takeIf { it in 1..12 } ?: return null
+    val day = parts[2].toIntOrNull()?.takeIf { it in 1..31 } ?: return null
+
+    val shiftedYear = (if (month <= 2) year - 1 else year).toLong()
+    val era = (if (shiftedYear >= 0) shiftedYear else shiftedYear - 399) / 400
+    val yearOfEra = shiftedYear - era * 400
+    val dayOfYear = (153 * (if (month > 2) month - 3 else month + 9) + 2) / 5 + day - 1
+    val dayOfEra = yearOfEra * 365 + yearOfEra / 4 - yearOfEra / 100 + dayOfYear
+    val epochMillis = (era * 146_097 + dayOfEra - 719_468) * MILLIS_PER_DAY
+
+    // Rejects dates such as 2026-02-31, which would roll over into the next month.
+    return epochMillis.takeIf { civilDateOf(it) == CivilDate(year, month, day) }
+}
+
 /** Midnight (UTC) at the start of the day that contains [epochMillis]. */
 fun startOfDayUtc(epochMillis: Long): Long = epochMillis - epochMillis.mod(MILLIS_PER_DAY)

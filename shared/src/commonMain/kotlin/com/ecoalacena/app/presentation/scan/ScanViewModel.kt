@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ecoalacena.app.core.MILLIS_PER_DAY
 import com.ecoalacena.app.core.currentEpochMillis
+import com.ecoalacena.app.core.formatDate
 import com.ecoalacena.app.core.i18n.AppStrings
 import com.ecoalacena.app.core.i18n.currentStrings
 import com.ecoalacena.app.domain.model.FoodClassifier
@@ -63,9 +64,21 @@ class ScanViewModel(
         _state.value = ScanState(status = ScanStatus.ANALYZING, image = image)
 
         analysisJob = viewModelScope.launch {
-            val result = analyzeFood(image.bytes, image.mimeType)
-            val drafts = result.getOrNull()
+            val result = analyzeFood.analyze(image.bytes, image.mimeType)
             val texts = strings()
+            val receiptDate = result.getOrNull()?.receiptDate
+            val drafts = result.getOrNull()?.items?.map { draft ->
+                // Food that went off according to the receipt date, not by its look.
+                if (draft.isSpoiled && draft.spoilageReason == null && receiptDate != null) {
+                    draft.copy(
+                        spoilageReason = texts.expiredByReceiptDate(
+                            formatDate(draft.expirationDate ?: receiptDate, texts.language),
+                        ),
+                    )
+                } else {
+                    draft
+                }
+            }
 
             _state.update { current ->
                 when {
@@ -85,6 +98,7 @@ class ScanViewModel(
                     else -> current.copy(
                         status = ScanStatus.REVIEW,
                         drafts = drafts,
+                        receiptDate = receiptDate,
                         errorMessage = null,
                     )
                 }

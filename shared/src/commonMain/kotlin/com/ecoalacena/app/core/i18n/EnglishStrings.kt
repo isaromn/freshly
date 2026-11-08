@@ -61,6 +61,14 @@ object EnglishStrings : AppStrings {
     override fun explainMoneyWasted(kg: String, pricePerKg: String) =
         "$kg kg of food thrown away (expired or spoiled), at an average price of COP $pricePerKg per kg."
     override val spoiledTitle = "⚠️ Not fit to eat"
+    override fun oldReceiptTitle(date: String, ageDays: Int) = "Old receipt: from $date ($ageDays days ago)"
+    override fun oldReceiptBody(expiredCount: Int) =
+        "We counted the expiration dates from the day of the purchase. " + when (expiredCount) {
+            0 -> "Check that everything still looks good before adding it."
+            1 -> "1 product has already expired: it won't be added to your pantry."
+            else -> "$expiredCount products have already expired: they won't be added to your pantry."
+        }
+    override fun expiredByReceiptDate(date: String) = "Expired on $date, counting from the receipt date."
     override fun ecoAlternative(tip: String) = "🌿 Eco alternative: $tip"
     override val spoiledDefaultTip = "Put it in the compost or the organic waste bin."
     override val registerAsCompost = "Record as wasted (compost)"

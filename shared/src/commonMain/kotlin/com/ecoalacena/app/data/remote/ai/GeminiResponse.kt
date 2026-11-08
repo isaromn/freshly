@@ -40,6 +40,8 @@ data class GeminiAnalysisResult(
 @Serializable
 data class GeminiAnalysisResponse(
     val items: List<GeminiAnalysisResult> = emptyList(),
+    /** Purchase date printed on a receipt, as `YYYY-MM-DD`; `null` for photos or when unreadable. */
+    val receiptDate: String? = null,
 )
 
 // --- Envelope returned by the Gemini `generateContent` endpoint (only the fields we use) ---

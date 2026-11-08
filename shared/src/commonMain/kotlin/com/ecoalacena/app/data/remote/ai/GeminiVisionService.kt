@@ -1,5 +1,7 @@
 package com.ecoalacena.app.data.remote.ai
 
+import com.ecoalacena.app.core.civilDateOf
+import com.ecoalacena.app.core.currentEpochMillis
 import com.ecoalacena.app.core.i18n.AppLanguage
 import com.ecoalacena.app.core.i18n.currentLanguage
 import io.ktor.client.HttpClient
@@ -38,20 +40,22 @@ class GeminiVisionService(
     private val config: GeminiConfig,
     /** Language of the app, read on every request, so the product names match the UI. */
     private val language: () -> AppLanguage = ::currentLanguage,
+    /** Today's date goes in the prompt, so the model can read two-digit years on receipts. */
+    private val nowMillis: () -> Long = ::currentEpochMillis,
 ) {
 
     /** Analyses raw image bytes (JPEG, PNG or WEBP). */
     suspend fun analyzeImage(
         imageBytes: ByteArray,
         mimeType: String = DEFAULT_MIME_TYPE,
-    ): Result<List<GeminiAnalysisResult>> =
+    ): Result<GeminiAnalysisResponse> =
         analyzeImageBase64(Base64.Default.encode(imageBytes), mimeType)
 
     /** Analyses an image that is already Base64-encoded (without a `data:` URI prefix). */
     suspend fun analyzeImageBase64(
         base64Image: String,
         mimeType: String = DEFAULT_MIME_TYPE,
-    ): Result<List<GeminiAnalysisResult>> =
+    ): Result<GeminiAnalysisResponse> =
         try {
             Result.success(requestAnalysis(base64Image, mimeType))
         } catch (cancellation: CancellationException) {
@@ -65,7 +69,7 @@ class GeminiVisionService(
     private suspend fun requestAnalysis(
         base64Image: String,
         mimeType: String,
-    ): List<GeminiAnalysisResult> {
+    ): GeminiAnalysisResponse {
         if (config.apiKey.isBlank()) throw GeminiException.MissingApiKey()
         if (base64Image.length > MAX_BASE64_LENGTH) throw GeminiException.ImageTooLarge()
 
@@ -93,11 +97,15 @@ class GeminiVisionService(
         )
 
         val text = httpClient.requestGeminiText(config, request)
-        return decodeGeminiJson<GeminiAnalysisResponse>(text).items
+        return decodeGeminiJson<GeminiAnalysisResponse>(text)
     }
 
-    private fun userPrompt(outputLanguage: AppLanguage): String =
-        "Analyze this image and return the JSON. Write the product names in ${outputLanguage.aiName}."
+    private fun userPrompt(outputLanguage: AppLanguage): String {
+        val today = civilDateOf(nowMillis())
+        val iso = "${today.year}-${today.month.toString().padStart(2, '0')}-${today.day.toString().padStart(2, '0')}"
+        return "Today is $iso. Analyze this image and return the JSON. " +
+            "Write the product names in ${outputLanguage.aiName}."
+    }
 
     private fun systemPrompt(outputLanguage: AppLanguage): String = """
         You are the vision engine of Freshly, a pantry-tracking app that helps people
@@ -115,6 +123,9 @@ class GeminiVisionService(
           their quantities. Ignore non-food lines (cleaning products, bags, cosmetics), taxes,
           discounts, totals and store information.
         - Return at most 50 items. If there is no food at all, return {"items": []}.
+        - receiptDate (top level, next to "items"): for receipts, the purchase date printed on it,
+          as YYYY-MM-DD. Receipts often print the day first (31/10/26, 31-10-2026); a two-digit year
+          is in this century and never after today. Use null for photos, or when no date is legible.
 
         LANGUAGE
         - Receipts, labels and packages can be in Spanish or in English, or mix both. Read both
@@ -299,8 +310,15 @@ class GeminiVisionService(
                         }
                     }
                 }
+                putJsonObject("receiptDate") {
+                    put("type", "STRING")
+                    put("nullable", true)
+                }
             }
-            putJsonArray("required") { add("items") }
+            putJsonArray("required") {
+                add("items")
+                add("receiptDate")
+            }
         }
     }
 }

@@ -2,6 +2,7 @@ package com.ecoalacena.app.domain.usecase
 
 import com.ecoalacena.app.core.MILLIS_PER_DAY
 import com.ecoalacena.app.core.currentEpochMillis
+import com.ecoalacena.app.core.parseIsoDate
 import com.ecoalacena.app.core.i18n.AppLanguage
 import com.ecoalacena.app.core.i18n.currentLanguage
 import com.ecoalacena.app.data.demo.DemoReceipt
@@ -15,6 +16,12 @@ import com.ecoalacena.app.domain.model.PantryItem
 import kotlin.math.round
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+
+/** What a scan found, and when the receipt was printed (`null` for photos or unreadable dates). */
+data class ScanAnalysis(
+    val items: List<PantryItem>,
+    val receiptDate: Long? = null,
+)
 
 /**
  * Analyses a photo (a product or a supermarket receipt, in Spanish or English) with Gemini and
@@ -45,14 +52,20 @@ class AnalyzeFoodUseCase(
     suspend operator fun invoke(
         imageBytes: ByteArray,
         mimeType: String = "image/jpeg",
-    ): Result<List<PantryItem>> =
-        visionService.analyzeImage(imageBytes, mimeType).map { it.toPantryItems() }
+    ): Result<List<PantryItem>> = analyze(imageBytes, mimeType).map { it.items }
+
+    /** Like [invoke], and also says when the receipt was printed (for old receipts). */
+    suspend fun analyze(
+        imageBytes: ByteArray,
+        mimeType: String = "image/jpeg",
+    ): Result<ScanAnalysis> =
+        visionService.analyzeImage(imageBytes, mimeType).map { it.toScanAnalysis() }
 
     suspend fun fromBase64(
         base64Image: String,
         mimeType: String = "image/jpeg",
     ): Result<List<PantryItem>> =
-        visionService.analyzeImageBase64(base64Image, mimeType).map { it.toPantryItems() }
+        visionService.analyzeImageBase64(base64Image, mimeType).map { it.toScanAnalysis().items }
 
     /**
      * Demo mode: turns a preloaded supermarket receipt into pantry items without network access
@@ -62,18 +75,34 @@ class AnalyzeFoodUseCase(
     fun demoReceipt(): Result<List<PantryItem>> =
         try {
             val response = geminiJson.decodeFromString<GeminiAnalysisResponse>(DemoReceipt.json(language()))
-            Result.success(response.items.toPantryItems())
+            Result.success(response.toScanAnalysis().items)
         } catch (error: Exception) {
             Result.failure(error)
         }
 
-    private fun List<GeminiAnalysisResult>.toPantryItems(): List<PantryItem> {
+    /**
+     * Shelf lives count from the day the food was bought: the receipt date when there is one,
+     * today otherwise. Food from an old receipt may already be past its date: it is marked as spoiled
+     * so it is never stored as fresh food.
+     */
+    private fun GeminiAnalysisResponse.toScanAnalysis(): ScanAnalysis {
         val now = nowMillis()
-        return filter { it.confidence >= MIN_CONFIDENCE }.mapNotNull { result -> result.toPantryItem(now) }
+        val purchasedAt = receiptDate
+            ?.let(::parseIsoDate)
+            // A misread date in the future, or decades ago, is ignored.
+            ?.takeIf { it <= now && it >= now - MAX_RECEIPT_AGE_DAYS * MILLIS_PER_DAY }
+        val items = items
+            .filter { it.confidence >= MIN_CONFIDENCE }
+            .mapNotNull { result -> result.toPantryItem(now, purchasedAt ?: now) }
+            .map { item ->
+                val expiredByDate = purchasedAt != null && (item.expirationDate ?: Long.MAX_VALUE) < now
+                if (expiredByDate) item.copy(isSpoiled = true) else item
+            }
+        return ScanAnalysis(items = items, receiptDate = purchasedAt)
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    private fun GeminiAnalysisResult.toPantryItem(now: Long): PantryItem? {
+    private fun GeminiAnalysisResult.toPantryItem(now: Long, purchasedAt: Long): PantryItem? {
         val cleanName = name.toDisplayName()
         if (cleanName.isEmpty()) return null
 
@@ -83,8 +112,8 @@ class AnalyzeFoodUseCase(
             now
         } else {
             estimatedDaysUntilExpiration
-                ?.let { days -> now + days.coerceIn(0, MAX_SHELF_LIFE_DAYS) * MILLIS_PER_DAY }
-                ?: estimateExpiration(cleanName, itemCategory, now)
+                ?.let { days -> purchasedAt + days.coerceIn(0, MAX_SHELF_LIFE_DAYS) * MILLIS_PER_DAY }
+                ?: estimateExpiration(cleanName, itemCategory, purchasedAt)
         }
         val measure = normalizeMeasure(quantity, unit)
 
@@ -163,6 +192,9 @@ class AnalyzeFoodUseCase(
         const val MIN_CONFIDENCE = 0.3
 
         private const val MAX_SHELF_LIFE_DAYS = 3650
+
+        /** Receipt dates older than this are treated as misread. */
+        private const val MAX_RECEIPT_AGE_DAYS = 3L * 365
 
         /** Larger values are not believable even for a whole pack: they are dropped. */
         private const val MAX_CALORIES = 10_000

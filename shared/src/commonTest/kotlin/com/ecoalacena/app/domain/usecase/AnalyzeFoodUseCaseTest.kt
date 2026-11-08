@@ -2,6 +2,7 @@ package com.ecoalacena.app.domain.usecase
 
 import com.ecoalacena.app.core.MILLIS_PER_DAY
 import com.ecoalacena.app.core.i18n.AppLanguage
+import com.ecoalacena.app.core.parseIsoDate
 import com.ecoalacena.app.data.remote.ai.GeminiConfig
 import com.ecoalacena.app.data.remote.ai.GeminiException
 import com.ecoalacena.app.data.remote.ai.GeminiVisionService
@@ -199,6 +200,44 @@ class AnalyzeFoodUseCaseTest {
     }
 
     @Test
+    fun countsShelfLifeFromTheReceiptDate() = runTest {
+        // NOW is 2023-11-14; the receipt is from 2023-11-04, ten days earlier.
+        val useCase = useCaseReturning(
+            geminiBody(
+                """{"receiptDate":"2023-11-04","items":[""" +
+                    """{"name":"Leche","category":"DAIRY","quantity":1,"unit":"l","estimatedDaysUntilExpiration":7,"confidence":0.9},""" +
+                    """{"name":"Arroz","category":"PANTRY_STAPLE","quantity":1,"unit":"kg","estimatedDaysUntilExpiration":365,"confidence":0.9}]}""",
+            ),
+        )
+
+        val analysis = useCase.analyze(imageBytes).getOrThrow()
+        val (milk, rice) = analysis.items
+
+        val receiptDay = parseIsoDate("2023-11-04")!!
+        assertEquals(receiptDay, analysis.receiptDate)
+        // Milk lasted 7 days from the purchase, so it is already past its date.
+        assertEquals(receiptDay + 7 * MILLIS_PER_DAY, milk.expirationDate)
+        assertTrue(milk.isSpoiled)
+        assertEquals(receiptDay + 365 * MILLIS_PER_DAY, rice.expirationDate)
+        assertEquals(false, rice.isSpoiled)
+    }
+
+    @Test
+    fun ignoresAReceiptDateInTheFuture() = runTest {
+        val useCase = useCaseReturning(
+            geminiBody(
+                """{"receiptDate":"2031-01-01","items":[""" +
+                    """{"name":"Leche","category":"DAIRY","quantity":1,"unit":"l","estimatedDaysUntilExpiration":7,"confidence":0.9}]}""",
+            ),
+        )
+
+        val analysis = useCase.analyze(imageBytes).getOrThrow()
+
+        assertEquals(null, analysis.receiptDate)
+        assertEquals(NOW + 7 * MILLIS_PER_DAY, analysis.items.single().expirationDate)
+    }
+
+    @Test
     fun keepsWhatTheModelSaysAboutSpoiledFood() = runTest {
         val useCase = useCaseReturning(
             geminiBody(
@@ -329,6 +368,9 @@ class AnalyzeFoodUseCaseTest {
             listOf("confidence", "caloriesPerUnit", "proteinGrams", "carbsGrams", "fatGrams", "isSpoiled")
                 .all { it in required },
         )
+        val root = schema.getValue("responseSchema").jsonObject
+        assertTrue("receiptDate" in root.getValue("properties").jsonObject)
+        assertTrue("receiptDate" in root.getValue("required").jsonArray.map { it.jsonPrimitive.content })
     }
 
     private fun useCaseReturning(

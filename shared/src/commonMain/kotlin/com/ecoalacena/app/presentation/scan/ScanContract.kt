@@ -1,5 +1,6 @@
 package com.ecoalacena.app.presentation.scan
 
+import com.ecoalacena.app.core.MILLIS_PER_DAY
 import com.ecoalacena.app.domain.model.PantryItem
 
 /** A photo chosen or taken by the user. Compared by reference, not by content. */
@@ -24,8 +25,17 @@ data class ScanState(
     val image: ScanImage? = null,
     /** Products suggested by Gemini, not yet saved to the pantry. */
     val drafts: List<PantryItem> = emptyList(),
+    /** Purchase date printed on the scanned receipt; `null` for photos or when it is unreadable. */
+    val receiptDate: Long? = null,
     val errorMessage: String? = null,
 ) {
+    /** Days since the receipt was printed, when it is old enough to warn about it. */
+    fun oldReceiptAgeDays(now: Long): Int? {
+        val printedAt = receiptDate ?: return null
+        val days = ((now - printedAt) / MILLIS_PER_DAY).toInt()
+        return days.takeIf { it >= OLD_RECEIPT_DAYS }
+    }
+
     /** Products that can go to the pantry. */
     val freshDrafts: List<PantryItem>
         get() = drafts.filterNot { it.isSpoiled }
@@ -34,6 +44,9 @@ data class ScanState(
     val spoiledDrafts: List<PantryItem>
         get() = drafts.filter { it.isSpoiled }
 }
+
+/** Receipts at least this old get a warning: their food may have gone off already. */
+const val OLD_RECEIPT_DAYS = 7
 
 sealed interface ScanIntent {
     data class ImageSelected(val image: ScanImage) : ScanIntent
