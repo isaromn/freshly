@@ -15,6 +15,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -34,6 +39,11 @@ import ecoalacenakmp.shared.generated.resources.recipe_sandwich
 import ecoalacenakmp.shared.generated.resources.recipe_soup
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+
+private const val UNSPLASH_NAME = "Unsplash"
+
+/** Unsplash home page with the referral parameters its API guidelines ask for. */
+private const val UNSPLASH_HOME_URL = "https://unsplash.com/?utm_source=freshly&utm_medium=referral"
 
 /** Width / height of recipe pictures; the local illustrations are drawn at this shape (320 × 160). */
 internal const val RECIPE_IMAGE_ASPECT_RATIO = 2f
@@ -84,6 +94,7 @@ internal fun RecipeHeaderImage(
         if (photoShown && credit != null) {
             PhotoCredit(
                 name = credit,
+                authorUrl = recipe.imageCreditUrl,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(8.dp),
@@ -92,9 +103,26 @@ internal fun RecipeHeaderImage(
     }
 }
 
-/** "Photo by … on Unsplash", required by the Unsplash API guidelines. */
+/**
+ * "Photo by … on Unsplash", required by the Unsplash API guidelines: the author's name links to
+ * their profile and "Unsplash" to its home page.
+ */
 @Composable
-private fun PhotoCredit(name: String, modifier: Modifier = Modifier) {
+private fun PhotoCredit(name: String, authorUrl: String?, modifier: Modifier = Modifier) {
+    val text = LocalAppStrings.current.photoCredit(name)
+    val linkStyle = TextLinkStyles(style = SpanStyle(textDecoration = TextDecoration.Underline))
+    val credit = buildAnnotatedString {
+        append(text)
+        if (authorUrl != null) {
+            text.indexOf(name).takeIf { it >= 0 }?.let { start ->
+                addLink(LinkAnnotation.Url(authorUrl, linkStyle), start, start + name.length)
+            }
+        }
+        text.lastIndexOf(UNSPLASH_NAME).takeIf { it >= 0 }?.let { start ->
+            addLink(LinkAnnotation.Url(UNSPLASH_HOME_URL, linkStyle), start, start + UNSPLASH_NAME.length)
+        }
+    }
+
     Surface(
         modifier = modifier,
         shape = MaterialTheme.shapes.small,
@@ -102,7 +130,7 @@ private fun PhotoCredit(name: String, modifier: Modifier = Modifier) {
         contentColor = Color.White,
     ) {
         Text(
-            text = LocalAppStrings.current.photoCredit(name),
+            text = credit,
             style = MaterialTheme.typography.labelSmall,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

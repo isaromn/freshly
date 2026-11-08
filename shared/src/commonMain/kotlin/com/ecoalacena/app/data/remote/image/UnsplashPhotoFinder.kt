@@ -11,9 +11,13 @@ import io.ktor.http.isSuccess
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 private const val UNSPLASH_SEARCH_URL = "https://api.unsplash.com/search/photos"
+
+/** Referral parameters that the Unsplash API guidelines ask for on every link back to Unsplash. */
+internal const val UNSPLASH_REFERRAL = "utm_source=freshly&utm_medium=referral"
 
 /**
  * Access key of the Unsplash API, supplied by each platform like the Gemini key.
@@ -27,6 +31,9 @@ data class UnsplashConfig(val accessKey: String)
  *
  * Found photos are kept in memory by search text: the free Unsplash plan allows 50 searches an
  * hour, and the same recipes come back every time the recipes tab reloads.
+ *
+ * As the Unsplash API guidelines ask, each chosen photo is reported to its download endpoint once,
+ * and the credit links to the author's profile with referral parameters.
  */
 class UnsplashPhotoFinder(
     private val httpClient: HttpClient,
@@ -60,7 +67,12 @@ class UnsplashPhotoFinder(
                 null
             } else {
                 response.body<UnsplashSearchResponse>().results.firstOrNull()?.let { photo ->
-                    RecipePhoto(url = photo.urls.regular, credit = photo.user.name)
+                    trackDownload(photo.links.downloadLocation)
+                    RecipePhoto(
+                        url = photo.urls.regular,
+                        credit = photo.user.name,
+                        creditUrl = photo.user.links.html.withReferral(),
+                    )
                 }
             }
         } catch (cancellation: CancellationException) {
@@ -68,16 +80,46 @@ class UnsplashPhotoFinder(
         } catch (error: Exception) {
             null
         }
+
+    /** Tells Unsplash the photo is being used. A failure here must not hide the photo. */
+    private suspend fun trackDownload(downloadLocation: String) {
+        if (downloadLocation.isBlank()) return
+        try {
+            httpClient.get(downloadLocation) {
+                header("Authorization", "Client-ID ${config.accessKey}")
+                header("Accept-Version", "v1")
+            }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (error: Exception) {
+            // Ignored: the photo can still be shown with its credit.
+        }
+    }
 }
+
+/** The link with the Unsplash referral parameters, or `null` when there is no link. */
+private fun String.withReferral(): String? = if (isBlank()) null else "$this?$UNSPLASH_REFERRAL"
 
 @Serializable
 internal data class UnsplashSearchResponse(val results: List<UnsplashPhoto> = emptyList())
 
 @Serializable
-internal data class UnsplashPhoto(val urls: UnsplashUrls, val user: UnsplashUser)
+internal data class UnsplashPhoto(
+    val urls: UnsplashUrls,
+    val user: UnsplashUser,
+    val links: UnsplashPhotoLinks = UnsplashPhotoLinks(),
+)
+
+@Serializable
+internal data class UnsplashPhotoLinks(
+    @SerialName("download_location") val downloadLocation: String = "",
+)
 
 @Serializable
 internal data class UnsplashUrls(val regular: String)
 
 @Serializable
-internal data class UnsplashUser(val name: String)
+internal data class UnsplashUser(val name: String, val links: UnsplashUserLinks = UnsplashUserLinks())
+
+@Serializable
+internal data class UnsplashUserLinks(val html: String = "")

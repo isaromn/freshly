@@ -21,19 +21,38 @@ class UnsplashPhotoFinderTest {
     @Test
     fun returnsTheFirstPhotoWithItsAuthor() = runTest {
         var request: HttpRequestData? = null
-        val finder = finderFor(onRequest = { request = it })
+        val finder = finderFor(onRequest = { if (it.isSearch()) request = it })
 
         val photo = finder.findPhoto("carrot soup")
 
-        assertEquals(RecipePhoto(url = "https://images.unsplash.com/soup", credit = "Ana Pérez"), photo)
+        assertEquals(
+            RecipePhoto(
+                url = "https://images.unsplash.com/soup",
+                credit = "Ana Pérez",
+                creditUrl = "https://unsplash.com/@ana?utm_source=freshly&utm_medium=referral",
+            ),
+            photo,
+        )
         assertEquals("carrot soup", request?.url?.parameters?.get("query"))
         assertEquals("Client-ID test-key", request?.headers?.get("Authorization"))
     }
 
     @Test
+    fun theChosenPhotoIsReportedToItsDownloadEndpointOnce() = runTest {
+        val downloads = mutableListOf<HttpRequestData>()
+        val finder = finderFor(onRequest = { if (!it.isSearch()) downloads += it })
+
+        finder.findPhoto("carrot soup")
+        finder.findPhoto("carrot soup")
+
+        assertEquals(listOf("https://api.unsplash.com/photos/x/download"), downloads.map { it.url.toString() })
+        assertEquals("Client-ID test-key", downloads.single().headers["Authorization"])
+    }
+
+    @Test
     fun theSameSearchIsOnlySentOnce() = runTest {
         var requests = 0
-        val finder = finderFor(onRequest = { requests++ })
+        val finder = finderFor(onRequest = { if (it.isSearch()) requests++ })
 
         finder.findPhoto("carrot soup")
         val second = finder.findPhoto("  Carrot Soup ")
@@ -79,9 +98,12 @@ class UnsplashPhotoFinderTest {
         return UnsplashPhotoFinder(client, UnsplashConfig(accessKey))
     }
 
+    private fun HttpRequestData.isSearch() = url.encodedPath.endsWith("/search/photos")
+
     private companion object {
         const val SEARCH_RESPONSE =
             """{"total":1,"results":[{"id":"x","urls":{"regular":"https://images.unsplash.com/soup",""" +
-                """"small":"s"},"user":{"name":"Ana Pérez","username":"ana"}}]}"""
+                """"small":"s"},"links":{"download_location":"https://api.unsplash.com/photos/x/download"},""" +
+                """"user":{"name":"Ana Pérez","username":"ana","links":{"html":"https://unsplash.com/@ana"}}}]}"""
     }
 }

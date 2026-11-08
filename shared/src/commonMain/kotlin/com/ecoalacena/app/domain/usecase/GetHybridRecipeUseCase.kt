@@ -198,7 +198,11 @@ class GetHybridRecipeUseCase(
                         val photo = withTimeoutOrNull(PHOTO_TIMEOUT_MILLIS) {
                             photoFinder.findPhoto(recipe.imageQuery)
                         }
-                        if (photo == null) recipe else recipe.copy(imageUrl = photo.url, imageCredit = photo.credit)
+                        if (photo == null) recipe else recipe.copy(
+                            imageUrl = photo.url,
+                            imageCredit = photo.credit,
+                            imageCreditUrl = photo.creditUrl,
+                        )
                     }
                 }
                 .awaitAll()

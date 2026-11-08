@@ -64,6 +64,8 @@ data class Recipe(
     val imageUrl: String? = null,
     /** Who took the photo, shown next to it (required by Unsplash); `null` when there is no photo. */
     val imageCredit: String? = null,
+    /** Profile page of the photo's author, linked from the credit; `null` when there is none. */
+    val imageCreditUrl: String? = null,
     /** Ids of the pantry items this recipe cooks with, offered for discounting when it is done. */
     val pantryItemIds: List<String> = emptyList(),
     /** How many people the recipe feeds; `null` when unknown. */
