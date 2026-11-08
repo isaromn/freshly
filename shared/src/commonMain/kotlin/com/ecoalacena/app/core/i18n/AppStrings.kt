@@ -39,7 +39,8 @@ interface AppStrings {
     val shareError: String
     fun expiredBannerTitle(count: Int): String
     val expiredBannerBody: String
-    val registerAllAsWasted: String
+    val expiredBannerShort: String
+    val removeShort: String
     val whatToDoWithThem: String
     fun disposalTitle(method: DisposalMethod): String
     fun disposalTip(method: DisposalMethod): String

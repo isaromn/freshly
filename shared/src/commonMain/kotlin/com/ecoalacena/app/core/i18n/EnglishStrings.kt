@@ -37,7 +37,8 @@ object EnglishStrings : AppStrings {
         if (count == 1) "1 item expired" else "$count items expired"
     override val expiredBannerBody =
         "They are no longer safe to eat: they will be taken out of your pantry and counted as wasted food."
-    override val registerAllAsWasted = "Take out of my pantry"
+    override val expiredBannerShort = "Not safe to eat · tap to see what to do"
+    override val removeShort = "Remove"
     override val whatToDoWithThem = "What to do with them"
     override fun disposalTitle(method: DisposalMethod) =
         when (method) {

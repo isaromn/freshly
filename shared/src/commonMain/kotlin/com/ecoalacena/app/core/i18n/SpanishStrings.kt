@@ -36,7 +36,8 @@ object SpanishStrings : AppStrings {
         if (count == 1) "1 alimento vencido" else "$count alimentos vencidos"
     override val expiredBannerBody =
         "Ya no son aptos para consumo: se retirarán de tu alacena y contarán como desperdicio."
-    override val registerAllAsWasted = "Retirar de la alacena"
+    override val expiredBannerShort = "No aptos para consumo · toca para ver qué hacer"
+    override val removeShort = "Retirar"
     override val whatToDoWithThem = "¿Qué hacer con ellos?"
     override fun disposalTitle(method: DisposalMethod) =
         when (method) {
