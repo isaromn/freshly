@@ -2,11 +2,11 @@ package com.ecoalacena.app.presentation.pantry
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ecoalacena.app.core.MILLIS_PER_DAY
 import com.ecoalacena.app.core.currentEpochMillis
 import com.ecoalacena.app.core.formatDate
 import com.ecoalacena.app.core.i18n.AppStrings
 import com.ecoalacena.app.core.i18n.currentStrings
+import com.ecoalacena.app.core.wholeDaysBetween
 import com.ecoalacena.app.domain.model.Category
 import com.ecoalacena.app.domain.model.PantryItem
 import com.ecoalacena.app.domain.repository.PantryRepository
@@ -270,11 +270,7 @@ class PantryViewModel(
             ?: return PantryItemUi(this, FreshnessStatus.NO_DATE, daysLeft = null)
 
         val difference = expiration - now
-        val daysLeft = if (difference >= 0) {
-            (difference / MILLIS_PER_DAY).toInt()
-        } else {
-            -((-difference) / MILLIS_PER_DAY).toInt()
-        }
+        val daysLeft = wholeDaysBetween(now, expiration)
         val freshness = when {
             difference < 0 -> FreshnessStatus.EXPIRED
             daysLeft <= EXPIRING_SOON_DAYS -> FreshnessStatus.EXPIRING_SOON

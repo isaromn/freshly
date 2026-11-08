@@ -16,6 +16,14 @@ expect fun rememberCameraLauncher(
     onError: () -> Unit,
 ): (() -> Unit)?
 
+/**
+ * Returns a function that asks for permission to show notifications and reports the answer to
+ * [onResult]: the runtime dialog on Android 13+, the system prompt on iOS (only the first time),
+ * and whether the system tray is available on desktop.
+ */
+@Composable
+expect fun rememberNotificationPermissionRequest(onResult: (Boolean) -> Unit): () -> Unit
+
 /** Handles the system back gesture/button where the platform has one (Android). */
 @Composable
 expect fun PlatformBackHandler(enabled: Boolean = true, onBack: () -> Unit)

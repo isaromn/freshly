@@ -20,3 +20,7 @@ actual fun rememberCameraLauncher(
 actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) {
     // iOS has no system back button; navigation uses the on-screen back arrow.
 }
+
+@Composable
+actual fun rememberNotificationPermissionRequest(onResult: (Boolean) -> Unit): () -> Unit =
+    rememberNotifierPermissionRequest(onResult)

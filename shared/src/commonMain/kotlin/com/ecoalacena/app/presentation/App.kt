@@ -26,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,15 +40,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ecoalacenakmp.shared.generated.resources.Res
 import ecoalacenakmp.shared.generated.resources.logoNevera
+import kotlinx.coroutines.flow.first
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import com.ecoalacena.app.core.i18n.AppStrings
 import com.ecoalacena.app.core.i18n.currentStrings
+import com.ecoalacena.app.data.notification.PantryAlerts
+import com.ecoalacena.app.domain.repository.PantryRepository
+import com.ecoalacena.app.domain.repository.SettingsRepository
 import com.ecoalacena.app.presentation.i18n.LocalAppStrings
 import com.ecoalacena.app.presentation.impact.ImpactScreen
 import com.ecoalacena.app.presentation.pantry.PantryScreen
 import com.ecoalacena.app.presentation.platform.PlatformBackHandler
+import com.ecoalacena.app.presentation.platform.rememberNotificationPermissionRequest
 import com.ecoalacena.app.presentation.recipes.RecipeScreen
 import com.ecoalacena.app.presentation.scan.ScanScreen
+import com.ecoalacena.app.presentation.settings.SettingsScreen
 import com.ecoalacena.app.presentation.shopping.ShoppingScreen
 import com.ecoalacena.app.presentation.theme.EcoAlacenaTheme
 
@@ -117,10 +125,13 @@ private fun MainLayout() {
     var selectedTab by rememberSaveable(stateSaver = mainTabSaver) {
         mutableStateOf(MainTab.PANTRY)
     }
+    var showSettings by rememberSaveable { mutableStateOf(false) }
 
-    // Back from any other tab returns to the pantry (Android system back).
-    PlatformBackHandler(enabled = selectedTab != MainTab.PANTRY) {
-        selectedTab = MainTab.PANTRY
+    KeepNotificationsInSync()
+
+    // Back closes the settings first, then returns from any other tab to the pantry (Android system back).
+    PlatformBackHandler(enabled = showSettings || selectedTab != MainTab.PANTRY) {
+        if (showSettings) showSettings = false else selectedTab = MainTab.PANTRY
     }
 
     // The layout follows the size of the window: a bottom bar on phones, and a side rail
@@ -134,7 +145,10 @@ private fun MainLayout() {
                 if (!useSideRail) {
                     BottomNavigation(
                         selectedTab = selectedTab,
-                        onTabSelected = { selectedTab = it },
+                        onTabSelected = {
+                            selectedTab = it
+                            showSettings = false
+                        },
                     )
                 }
             },
@@ -149,17 +163,26 @@ private fun MainLayout() {
                 if (useSideRail) {
                     SideNavigation(
                         selectedTab = selectedTab,
-                        onTabSelected = { selectedTab = it },
+                        onTabSelected = {
+                            selectedTab = it
+                            showSettings = false
+                        },
                     )
                 }
 
-                MainContent(
-                    selectedTab = selectedTab,
-                    onTabSelected = { selectedTab = it },
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxSize(),
-                )
+                val contentModifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize()
+                if (showSettings) {
+                    SettingsScreen(onBack = { showSettings = false }, modifier = contentModifier)
+                } else {
+                    MainContent(
+                        selectedTab = selectedTab,
+                        onTabSelected = { selectedTab = it },
+                        onSettingsClick = { showSettings = true },
+                        modifier = contentModifier,
+                    )
+                }
             }
         }
     }
@@ -169,6 +192,7 @@ private fun MainLayout() {
 private fun MainContent(
     selectedTab: MainTab,
     onTabSelected: (MainTab) -> Unit,
+    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Every screen fills the whole content area, so the layout scales with the window.
@@ -176,6 +200,7 @@ private fun MainContent(
         when (selectedTab) {
             MainTab.PANTRY -> PantryScreen(
                 onScanClick = { onTabSelected(MainTab.SCAN) },
+                onSettingsClick = onSettingsClick,
                 modifier = Modifier.fillMaxSize(),
             )
 
@@ -251,5 +276,23 @@ private fun SideNavigation(
                 },
             )
         }
+    }
+}
+
+/**
+ * Asks once for permission to notify (when notifications are on) and keeps the scheduled alerts in
+ * line with the pantry and the settings while the app runs.
+ */
+@Composable
+private fun KeepNotificationsInSync() {
+    val alerts = koinInject<PantryAlerts>()
+    val pantry = koinInject<PantryRepository>()
+    val settings = koinInject<SettingsRepository>()
+    var permissionAsked by rememberSaveable { mutableStateOf(false) }
+    val requestPermission = rememberNotificationPermissionRequest { permissionAsked = true }
+
+    LaunchedEffect(alerts) {
+        if (!permissionAsked && settings.observeNotificationSettings().first().enabled) requestPermission()
+        alerts.keepInSync { pantry.observeAll().first() }
     }
 }

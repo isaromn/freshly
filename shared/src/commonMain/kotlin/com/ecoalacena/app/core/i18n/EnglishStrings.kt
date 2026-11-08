@@ -1,5 +1,6 @@
 package com.ecoalacena.app.core.i18n
 
+import com.ecoalacena.app.domain.model.AlertLead
 import com.ecoalacena.app.domain.model.Category
 import com.ecoalacena.app.domain.model.DisposalMethod
 import com.ecoalacena.app.domain.model.NutritionBasis
@@ -365,14 +366,48 @@ object EnglishStrings : AppStrings {
         "estimates based on averages; the real impact depends on the type of food."
 
     // ---- Notifications ----
-    override val notificationChannelName = "Expiration reminders"
-    override val notificationChannelDescription = "Alerts when a food item in your pantry is about to expire"
-    override val notificationTitle = "Expiring soon"
+    override val notificationChannelName = "Pantry Alerts"
+    override val notificationChannelDescription =
+        "Alerts when food in your pantry is about to expire or runs out"
 
-    override fun notificationBody(name: String, daysLeft: Int) =
+    override fun expirationAlertTitle(name: String, daysLeft: Int) =
         when (daysLeft) {
-            0 -> "“$name” expires today"
-            1 -> "“$name” expires tomorrow"
-            else -> "“$name” expires in $daysLeft days"
+            0 -> "⚠️ $name expires today!"
+            1 -> "⚠️ $name expires tomorrow!"
+            else -> "⚠️ $name expires in $daysLeft days!"
         }
+
+    override val expirationAlertBody = "Check recipes to use it before it spoils."
+    override fun usedUpAlertTitle(name: String) = "🧺 $name ran out"
+    override val usedUpAlertBody =
+        "It's now suggested on your shopping list. Share the list with your household so nobody buys it twice."
+    override val testAlertTitle = "🥬 Freshly alerts are on"
+    override val testAlertBody = "This is how you'll hear about food that is about to expire."
+
+    // ---- Settings ----
+    override val settingsTitle = "Settings"
+    override val settingsSubtitle = "Notifications and alerts"
+    override val openSettings = "Open settings"
+    override val notificationsEnabled = "Notifications"
+    override val notificationsEnabledHint = "Alerts about food that is about to expire"
+    override val alertLeadTitle = "When to alert me"
+
+    override fun alertLeadLabel(lead: AlertLead) =
+        when (lead) {
+            AlertLead.SAME_DAY -> "Same day"
+            AlertLead.ONE_DAY -> "1 day before"
+            AlertLead.TWO_DAYS -> "2 days before"
+        }
+
+    override val alertHourTitle = "Alert time"
+    override val householdUpdates = "Household updates"
+    override val householdUpdatesHint =
+        "Alert when something runs out, so you can tell your household and avoid buying it twice"
+    override val sendTestAlert = "Send a test alert"
+    override val testAlertSent = "Test alert sent"
+    override val notificationsDenied =
+        "Notifications are blocked. Allow them for Freshly in the system settings."
+    override val notificationsDeviceNote =
+        "Alerts are stored on this device. On desktop they arrive while Freshly is open. " +
+            "Household updates do not sync between devices: share your list from the Shopping tab."
 }

@@ -22,6 +22,11 @@ ViewModels and the whole UI live in `shared/commonMain`.
 - **Hybrid recipes**: Gemini creates recipes that prioritise the ingredients closest to expiring, always
   combined with an **offline recipe engine** with its own recipe templates, so recipes keep coming without
   network, API key or quota. Recipes include servings, calories and macros, and photos from Unsplash.
+- **Expiration alerts**: local notifications 2 days, 1 day or the same day before food expires, at the
+  hour you choose (for example "⚠️ Whole Milk expires in 2 days! Check recipes to use it before it spoils.").
+  Alerts are scheduled when food is scanned, added or edited, and cancelled when it is eaten, thrown away or
+  deleted. A **household update** tells you when something runs out so you can share the shopping list and
+  avoid buying it twice. Everything is configurable in **Settings** (gear icon on the Pantry screen).
 - **Shopping list**: add products by hand, get suggestions from the food you used up, and share the list.
 - **Impact dashboard**: kilograms of food saved, waste avoided, and money lost to wasted food.
 - **Offline-first**: all data is stored locally with SQLDelight, with schema migrations.
@@ -32,12 +37,13 @@ ViewModels and the whole UI live in `shared/commonMain`.
 
 | Source set | Lines of Kotlin | What lives there |
 |---|---|---|
-| `commonMain` | ~12,100 | Domain, use cases, repositories, Gemini/Unsplash clients, SQLDelight schema, ViewModels, all Compose screens |
-| `androidMain` | ~80 | Platform `actual`s |
-| `iosMain` | ~115 | Platform `actual`s + `MainViewController` |
-| `jvmMain` | ~95 | Platform `actual`s |
+| `commonMain` | ~13,100 | Domain, use cases, repositories, Gemini/Unsplash clients, SQLDelight schema, ViewModels, all Compose screens |
+| `androidMain` | ~290 | Platform `actual`s + notification worker |
+| `iosMain` | ~240 | Platform `actual`s + `MainViewController` |
+| `jvmMain` | ~190 | Platform `actual`s |
 
-About **97%** of the code is shared. Platform code is limited to a small set of `expect`/`actual` declarations:
+About **95%** of the code is shared. When an alert arrives and what it says is decided once in
+`commonMain` (`ExpirationAlertPlanner`, `PantryAlerts`); each platform only delivers it. Platform code is limited to a small set of `expect`/`actual` declarations:
 
 | `expect` declaration | Purpose |
 |---|---|
@@ -46,6 +52,8 @@ About **97%** of the code is shared. Platform code is limited to a small set of 
 | `rememberCameraLauncher` | Camera access for the scanner |
 | `PlatformBackHandler` | System back navigation |
 | `systemLanguageCode()` | Device language for the UI and AI prompts |
+| `NotificationService` | Local notifications: WorkManager + "Pantry Alerts" channel (Android), `UNUserNotificationCenter` calendar triggers (iOS), system tray (Desktop) |
+| `rememberNotificationPermissionRequest` | Notification permission (runtime dialog on Android 13+, system prompt on iOS) |
 | `platformModule` | Koin bindings for the platform services |
 
 ### Stack
@@ -137,7 +145,12 @@ each recipe shows the illustration of its category.
 2. On **Pantry**, mark an item as *Consumed* or *Discarded*, or tap its quantity to change it.
 3. Open **Recipes** to get dishes that use the items expiring first. Open one to see steps, servings and nutrition.
 4. Check **Impact** to see the food saved and the money lost to waste.
-5. Add a Gemini key and scan a real receipt or a photo of your fridge.
+5. Tap the gear on **Pantry** to open **Settings**: choose when alerts arrive and tap **Send a test alert**.
+   Food added from the sample receipt that expires within the chosen lead time is announced a few seconds later.
+6. Add a Gemini key and scan a real receipt or a photo of your fridge.
+
+> Notifications are local to each device. On Android they survive app restarts and reboots (WorkManager);
+> on Desktop they arrive while Freshly is open; household updates are not synced between devices.
 
 ## Tests
 

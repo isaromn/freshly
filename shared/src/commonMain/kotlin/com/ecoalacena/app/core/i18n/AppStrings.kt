@@ -1,5 +1,6 @@
 package com.ecoalacena.app.core.i18n
 
+import com.ecoalacena.app.domain.model.AlertLead
 import com.ecoalacena.app.domain.model.Category
 import com.ecoalacena.app.domain.model.DisposalMethod
 import com.ecoalacena.app.domain.model.NutritionBasis
@@ -250,8 +251,32 @@ interface AppStrings {
     // ---- Notifications ----
     val notificationChannelName: String
     val notificationChannelDescription: String
-    val notificationTitle: String
-    fun notificationBody(name: String, daysLeft: Int): String
+
+    /** "⚠️ Whole milk expires in 2 days!" */
+    fun expirationAlertTitle(name: String, daysLeft: Int): String
+    val expirationAlertBody: String
+
+    /** Household update when the last of an item is used. */
+    fun usedUpAlertTitle(name: String): String
+    val usedUpAlertBody: String
+    val testAlertTitle: String
+    val testAlertBody: String
+
+    // ---- Settings ----
+    val settingsTitle: String
+    val settingsSubtitle: String
+    val openSettings: String
+    val notificationsEnabled: String
+    val notificationsEnabledHint: String
+    val alertLeadTitle: String
+    fun alertLeadLabel(lead: AlertLead): String
+    val alertHourTitle: String
+    val householdUpdates: String
+    val householdUpdatesHint: String
+    val sendTestAlert: String
+    val testAlertSent: String
+    val notificationsDenied: String
+    val notificationsDeviceNote: String
 }
 
 fun stringsFor(language: AppLanguage): AppStrings =

@@ -64,6 +64,7 @@ kotlin {
             // Coroutines & Serialization
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.datetime)
 
             // Koin (DI)
             implementation(libs.koin.core)
@@ -93,6 +94,10 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.sqldelight.androidDriver)
             implementation(libs.ktor.client.okhttp)
+
+            // Expiration alerts: notifications scheduled with WorkManager survive reboots
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.androidx.work.runtime)
         }
         iosMain.dependencies {
             implementation(libs.sqldelight.nativeDriver)

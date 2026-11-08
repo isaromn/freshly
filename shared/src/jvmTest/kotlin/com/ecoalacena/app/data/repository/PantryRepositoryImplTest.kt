@@ -5,6 +5,7 @@ import com.ecoalacena.app.core.MILLIS_PER_DAY
 import com.ecoalacena.app.database.PantryDatabase
 import com.ecoalacena.app.domain.model.Category
 import com.ecoalacena.app.domain.model.ManualShoppingItem
+import com.ecoalacena.app.domain.model.NotificationSettings
 import com.ecoalacena.app.domain.model.PantryEventKind
 import com.ecoalacena.app.domain.model.PantryItem
 import kotlin.test.Test
@@ -82,7 +83,7 @@ class PantryRepositoryImplTest {
     }
 
     @Test
-    fun aDatabaseFromVersionOneGetsTheShoppingTablesAndNutrition() = runTest {
+    fun aDatabaseFromVersionOneGetsTheShoppingTablesNutritionAndSettings() = runTest {
         val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         // The tables of version 1, as they were before the shopping list existed.
         driver.execute(
@@ -111,7 +112,11 @@ class PantryRepositoryImplTest {
         val pantry = PantryRepositoryImpl(database, Dispatchers.Unconfined)
         pantry.upsert(rice.copy(caloriesPerUnit = 130))
         assertEquals(130, pantry.observeById("rice").first()?.caloriesPerUnit)
-        assertEquals(4L, PantryDatabase.Schema.version)
+
+        val settings = SettingsRepositoryImpl(database, Dispatchers.Unconfined)
+        settings.saveNotificationSettings(NotificationSettings(alertHour = 20))
+        assertEquals(20, settings.observeNotificationSettings().first().alertHour)
+        assertEquals(5L, PantryDatabase.Schema.version)
     }
 
     @Test

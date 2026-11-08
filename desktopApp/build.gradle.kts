@@ -19,6 +19,11 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "com.ecoalacena.app.MainKt"
+        // Name shown in the macOS menu bar and Dock when running with `./gradlew :desktopApp:run`
+        // (other JVMs do not know this option and would refuse to start).
+        if (System.getProperty("os.name").startsWith("Mac")) {
+            jvmArgs += listOf("-Xdock:name=Freshly")
+        }
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)

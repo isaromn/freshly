@@ -1,6 +1,9 @@
 package com.ecoalacena.app.di
 
 import com.ecoalacena.app.data.local.DatabaseDriverFactory
+import com.ecoalacena.app.data.notification.AlertingPantryRepository
+import com.ecoalacena.app.data.notification.ExpirationAlertPlanner
+import com.ecoalacena.app.data.notification.PantryAlerts
 import com.ecoalacena.app.data.remote.ai.GeminiConfig
 import com.ecoalacena.app.data.remote.ai.GeminiRecipeService
 import com.ecoalacena.app.data.remote.ai.GeminiVisionService
@@ -8,10 +11,12 @@ import com.ecoalacena.app.data.remote.ai.geminiJson
 import com.ecoalacena.app.data.remote.image.UnsplashConfig
 import com.ecoalacena.app.data.remote.image.UnsplashPhotoFinder
 import com.ecoalacena.app.data.repository.PantryRepositoryImpl
+import com.ecoalacena.app.data.repository.SettingsRepositoryImpl
 import com.ecoalacena.app.data.repository.ShoppingRepositoryImpl
 import com.ecoalacena.app.database.PantryDatabase
 import com.ecoalacena.app.domain.recipe.RecipePhotoFinder
 import com.ecoalacena.app.domain.repository.PantryRepository
+import com.ecoalacena.app.domain.repository.SettingsRepository
 import com.ecoalacena.app.domain.repository.ShoppingRepository
 import com.ecoalacena.app.domain.usecase.AnalyzeFoodUseCase
 import com.ecoalacena.app.domain.usecase.CalculateImpactUseCase
@@ -24,6 +29,7 @@ import com.ecoalacena.app.presentation.impact.ImpactViewModel
 import com.ecoalacena.app.presentation.pantry.PantryViewModel
 import com.ecoalacena.app.presentation.recipes.RecipeViewModel
 import com.ecoalacena.app.presentation.scan.ScanViewModel
+import com.ecoalacena.app.presentation.settings.SettingsViewModel
 import com.ecoalacena.app.presentation.shopping.ShoppingViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
@@ -42,8 +48,15 @@ import org.koin.dsl.module
 val appModule = module {
     // Local persistence (single source of truth)
     single { PantryDatabase(get<DatabaseDriverFactory>().createDriver()) }
-    single<PantryRepository> { PantryRepositoryImpl(get()) }
+    single { PantryRepositoryImpl(get()) }
     single<ShoppingRepository> { ShoppingRepositoryImpl(get()) }
+    single<SettingsRepository> { SettingsRepositoryImpl(get()) }
+
+    // Notifications: every pantry change goes through AlertingPantryRepository, which schedules
+    // or cancels the alerts (NotificationService is bound per platform in platformModule).
+    single { ExpirationAlertPlanner() }
+    single { PantryAlerts(notifier = get(), settings = get()) }
+    single<PantryRepository> { AlertingPantryRepository(delegate = get<PantryRepositoryImpl>(), alerts = get()) }
 
     // Networking: the engine is picked per platform (OkHttp on Android/Desktop, Darwin on iOS)
     single {
@@ -80,6 +93,7 @@ val appModule = module {
     viewModel { RecipeViewModel(getRecipes = get(), repository = get(), consumeIngredients = get()) }
     viewModel { ImpactViewModel(repository = get(), calculateImpact = get()) }
     viewModel { ShoppingViewModel(shoppingList = get(), shareText = get<ShareService>()::shareText) }
+    viewModel { SettingsViewModel(settings = get(), notifier = get()) }
 }
 
 /**

@@ -1,5 +1,6 @@
 package com.ecoalacena.app.core.i18n
 
+import com.ecoalacena.app.domain.model.AlertLead
 import com.ecoalacena.app.domain.model.Category
 import com.ecoalacena.app.domain.model.DisposalMethod
 import com.ecoalacena.app.domain.model.NutritionBasis
@@ -363,14 +364,48 @@ object SpanishStrings : AppStrings {
         "estimaciones basadas en promedios; el impacto real depende del tipo de alimento."
 
     // ---- Notifications ----
-    override val notificationChannelName = "Recordatorios de vencimiento"
-    override val notificationChannelDescription = "Avisos cuando un alimento de tu alacena está por vencer"
-    override val notificationTitle = "Próximo a vencer"
+    override val notificationChannelName = "Alertas de la alacena"
+    override val notificationChannelDescription =
+        "Avisos cuando un alimento de tu alacena está por vencer o se acaba"
 
-    override fun notificationBody(name: String, daysLeft: Int) =
+    override fun expirationAlertTitle(name: String, daysLeft: Int) =
         when (daysLeft) {
-            0 -> "“$name” vence hoy"
-            1 -> "“$name” vence mañana"
-            else -> "“$name” vence en $daysLeft días"
+            0 -> "⚠️ ¡$name vence hoy!"
+            1 -> "⚠️ ¡$name vence mañana!"
+            else -> "⚠️ ¡$name vence en $daysLeft días!"
         }
+
+    override val expirationAlertBody = "Revisa las recetas para aprovecharlo antes de que se dañe."
+    override fun usedUpAlertTitle(name: String) = "🧺 Se acabó: $name"
+    override val usedUpAlertBody =
+        "Ya aparece en las sugerencias de tu lista de compras. Compártela con tu hogar para no comprarlo dos veces."
+    override val testAlertTitle = "🥬 Las alertas de Freshly están activas"
+    override val testAlertBody = "Así te avisaremos cuando un alimento esté por vencer."
+
+    // ---- Settings ----
+    override val settingsTitle = "Ajustes"
+    override val settingsSubtitle = "Notificaciones y alertas"
+    override val openSettings = "Abrir ajustes"
+    override val notificationsEnabled = "Notificaciones"
+    override val notificationsEnabledHint = "Avisos de alimentos que están por vencer"
+    override val alertLeadTitle = "Cuándo avisarme"
+
+    override fun alertLeadLabel(lead: AlertLead) =
+        when (lead) {
+            AlertLead.SAME_DAY -> "El mismo día"
+            AlertLead.ONE_DAY -> "1 día antes"
+            AlertLead.TWO_DAYS -> "2 días antes"
+        }
+
+    override val alertHourTitle = "Hora del aviso"
+    override val householdUpdates = "Avisos para el hogar"
+    override val householdUpdatesHint =
+        "Avisa cuando algo se acaba, para contárselo a tu hogar y no comprarlo dos veces"
+    override val sendTestAlert = "Enviar alerta de prueba"
+    override val testAlertSent = "Alerta de prueba enviada"
+    override val notificationsDenied =
+        "Las notificaciones están bloqueadas. Permítelas para Freshly en los ajustes del sistema."
+    override val notificationsDeviceNote =
+        "Las alertas se guardan en este dispositivo. En el computador llegan mientras Freshly está abierto. " +
+            "Los avisos del hogar no se sincronizan entre dispositivos: comparte tu lista desde Compras."
 }

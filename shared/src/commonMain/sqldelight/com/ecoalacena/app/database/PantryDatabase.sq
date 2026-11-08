@@ -131,3 +131,17 @@ FROM shoppingDismissalEntity;
 insertDismissal:
 INSERT OR REPLACE INTO shoppingDismissalEntity(nameKey, dismissedAt)
 VALUES (?, ?);
+
+-- User preferences as key/value pairs (notification settings).
+CREATE TABLE appSettingEntity (
+    settingKey TEXT NOT NULL PRIMARY KEY,
+    settingValue TEXT NOT NULL
+);
+
+selectSettings:
+SELECT *
+FROM appSettingEntity;
+
+upsertSetting:
+INSERT OR REPLACE INTO appSettingEntity(settingKey, settingValue)
+VALUES (?, ?);

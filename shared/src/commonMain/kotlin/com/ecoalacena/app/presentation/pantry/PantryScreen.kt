@@ -37,6 +37,8 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -71,6 +73,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun PantryScreen(
     onScanClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PantryViewModel = koinViewModel(),
 ) {
@@ -91,6 +94,7 @@ fun PantryScreen(
         state = state,
         snackbarHostState = snackbarHostState,
         onIntent = viewModel::onIntent,
+        onSettingsClick = onSettingsClick,
         modifier = modifier,
     )
 }
@@ -100,6 +104,7 @@ private fun PantryContent(
     state: PantryState,
     snackbarHostState: SnackbarHostState,
     onIntent: (PantryIntent) -> Unit,
+    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val strings = LocalAppStrings.current
@@ -129,7 +134,7 @@ private fun PantryContent(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item(key = "header", span = { GridItemSpan(maxLineSpan) }) { PantryHeader() }
+            item(key = "header", span = { GridItemSpan(maxLineSpan) }) { PantryHeader(onSettingsClick = onSettingsClick) }
 
             item(key = "metric", span = { GridItemSpan(maxLineSpan) }) {
                 SavedKgCard(
@@ -230,7 +235,7 @@ private fun PantryDialogs(
 }
 
 @Composable
-private fun PantryHeader(modifier: Modifier = Modifier) {
+private fun PantryHeader(onSettingsClick: () -> Unit, modifier: Modifier = Modifier) {
     val strings = LocalAppStrings.current
 
     Row(
@@ -255,6 +260,14 @@ private fun PantryHeader(modifier: Modifier = Modifier) {
                 text = strings.pantrySubtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        IconButton(onClick = onSettingsClick) {
+            Icon(
+                imageVector = Icons.Filled.Settings,
+                contentDescription = strings.openSettings,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

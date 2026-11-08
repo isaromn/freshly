@@ -22,6 +22,9 @@ import java.io.File
 import java.util.Properties
 
 fun main() {
+    // macOS names the app in the menu bar after the main class ("MainKt") unless told otherwise.
+    System.setProperty("apple.awt.application.name", APP_NAME)
+
     initKoin(
         geminiConfig = GeminiConfig(apiKey = resolveSecret("GEMINI_API_KEY")),
         unsplashConfig = UnsplashConfig(accessKey = resolveSecret("UNSPLASH_ACCESS_KEY")),
@@ -39,7 +42,7 @@ fun main() {
         Window(
             onCloseRequest = ::exitApplication,
             state = windowState,
-            title = "Freshly",
+            title = APP_NAME,
             icon = appLogoPainter(),
         ) {
             // Stops the user from shrinking the window until the layout stops being usable.
@@ -54,6 +57,7 @@ fun main() {
     }
 }
 
+private const val APP_NAME = "Freshly"
 private const val MIN_WINDOW_WIDTH = 900
 private const val MIN_WINDOW_HEIGHT = 600
 

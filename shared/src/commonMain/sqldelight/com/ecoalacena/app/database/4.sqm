@@ -1,0 +1,5 @@
+-- Version 4 -> 5: user preferences (notification settings).
+CREATE TABLE appSettingEntity (
+    settingKey TEXT NOT NULL PRIMARY KEY,
+    settingValue TEXT NOT NULL
+);
