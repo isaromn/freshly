@@ -213,6 +213,34 @@ class PantryViewModelTest {
     }
 
     @Test
+    fun expiredItemsStayInThePantryUntilTheUserDecides() {
+        val viewModel = viewModelWith(fresh, item("old", expiresInDays = -2, category = Category.DAIRY))
+
+        assertEquals(1, viewModel.state.value.expiredCount)
+        assertEquals(setOf("fresh", "old"), viewModel.state.value.items.map { it.item.id }.toSet())
+    }
+
+    @Test
+    fun recordingAllExpiredAsWastedRemovesOnlyTheExpiredOnes() = runTest {
+        val viewModel = viewModelWith(
+            fresh,
+            item("old", expiresInDays = -2, category = Category.DAIRY),
+            item("older", expiresInDays = -5, category = Category.BAKERY),
+        )
+
+        viewModel.onIntent(PantryIntent.WasteExpiredClicked)
+        assertEquals(PantryDialog.ConfirmWasteExpired(2), viewModel.state.value.dialog)
+
+        viewModel.onIntent(PantryIntent.WasteAllExpired)
+
+        assertEquals(listOf("fresh"), viewModel.state.value.items.map { it.item.id })
+        assertEquals(0, viewModel.state.value.expiredCount)
+        assertNull(viewModel.state.value.dialog)
+        val effect = assertIs<PantryEffect.ShowMessage>(viewModel.effects.first())
+        assertEquals(SpanishStrings.wastedExpiredMessage(2), effect.message)
+    }
+
+    @Test
     fun scanClickEmitsNavigationEffect() = runTest {
         val viewModel = viewModelWith()
 

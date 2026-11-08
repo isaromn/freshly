@@ -44,6 +44,17 @@ class CalculateImpactUseCaseTest {
     }
 
     @Test
+    fun wastedFoodBecomesMoneyLostAtTheSamePrice() {
+        val metrics = calculateImpact(savedKg = 0.0, wastedKg = 3.0)
+
+        assertEquals(3.0, metrics.wastedKg)
+        assertEquals(3.0 * CalculateImpactUseCase.AVERAGE_PRICE_COP_PER_KG, metrics.moneyWastedCop)
+        assertEquals(metrics.moneyWastedCop / CalculateImpactUseCase.COP_PER_USD, metrics.moneyWastedUsd)
+        // Wasted food never counts as saved.
+        assertEquals(0.0, metrics.moneySavedCop)
+    }
+
+    @Test
     fun impactGrowsLinearlyWithKilograms() {
         val one = calculateImpact(1.0)
         val four = calculateImpact(4.0)

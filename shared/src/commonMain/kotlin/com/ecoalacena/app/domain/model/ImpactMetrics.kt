@@ -16,6 +16,11 @@ data class ImpactMetrics(
     val savedMeals: Int = 0,
     /** Estimated grams of protein of that food (only items whose protein is known). */
     val savedProteinGrams: Double = 0.0,
+    /** Kilograms of food thrown away (it expired or spoiled before it was eaten). */
+    val wastedKg: Double = 0.0,
+    /** What that wasted food cost, in Colombian pesos. */
+    val moneyWastedCop: Double = 0.0,
+    val moneyWastedUsd: Double = 0.0,
 ) {
     companion object {
         val EMPTY = ImpactMetrics(

@@ -36,6 +36,15 @@ interface AppStrings {
     val shoppingShareTitle: String
     val copiedToClipboard: String
     val shareError: String
+    fun expiredBannerTitle(count: Int): String
+    val expiredBannerBody: String
+    val registerAllAsWasted: String
+    val registerAsWasted: String
+    fun confirmWasteExpiredTitle(count: Int): String
+    val confirmWasteExpiredBody: String
+    fun wastedExpiredMessage(count: Int): String
+    val moneyWastedTitle: String
+    fun explainMoneyWasted(kg: String, pricePerKg: String): String
     val spoiledTitle: String
     fun ecoAlternative(tip: String): String
     val spoiledDefaultTip: String

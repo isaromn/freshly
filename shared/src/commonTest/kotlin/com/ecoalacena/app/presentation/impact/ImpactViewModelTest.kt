@@ -60,6 +60,19 @@ class ImpactViewModelTest {
     }
 
     @Test
+    fun thrownAwayFoodShowsAsMoneyLost() = runTest {
+        val viewModel = ImpactViewModel(repository, CalculateImpactUseCase())
+
+        repository.discard(testItem("milk", "Leche", expiresInDays = -1, quantity = 2.0), TEST_NOW)
+        repository.markConsumed(testItem("rice", "Arroz", expiresInDays = 30, quantity = 1.0), TEST_NOW)
+
+        val metrics = viewModel.state.value.metrics
+        assertEquals(2.0, metrics.wastedKg)
+        assertEquals(2.0 * CalculateImpactUseCase.AVERAGE_PRICE_COP_PER_KG, metrics.moneyWastedCop)
+        assertEquals(1.0, metrics.savedKg)
+    }
+
+    @Test
     fun metricsFollowTheSavedKilograms() {
         val viewModel = ImpactViewModel(repository, CalculateImpactUseCase())
 

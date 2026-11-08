@@ -4,7 +4,8 @@ import com.ecoalacena.app.domain.model.ImpactMetrics
 import kotlin.math.roundToInt
 
 /**
- * Converts kilograms of food saved from waste into money, CO2e and everyday equivalences.
+ * Converts kilograms of food saved from waste into money, CO2e and everyday equivalences, and the
+ * kilograms that were thrown away into the money lost. Both use the same average price per kg.
  *
  * All factors are estimates, shown to the user as such in the impact dashboard.
  */
@@ -14,8 +15,11 @@ class CalculateImpactUseCase {
         savedKg: Double,
         savedCalories: Double = 0.0,
         savedProteinGrams: Double = 0.0,
+        wastedKg: Double = 0.0,
     ): ImpactMetrics {
         val kg = savedKg.coerceAtLeast(0.0)
+        val wasted = wastedKg.coerceAtLeast(0.0)
+        val copWasted = wasted * AVERAGE_PRICE_COP_PER_KG
         val co2Kg = kg * CO2E_KG_PER_KG_FOOD
         val copSaved = kg * AVERAGE_PRICE_COP_PER_KG
 
@@ -29,6 +33,9 @@ class CalculateImpactUseCase {
             savedCalories = savedCalories.coerceAtLeast(0.0).roundToInt(),
             savedMeals = (kg * MEALS_PER_KG_FOOD).roundToInt(),
             savedProteinGrams = savedProteinGrams.coerceAtLeast(0.0),
+            wastedKg = wasted,
+            moneyWastedCop = copWasted,
+            moneyWastedUsd = copWasted / COP_PER_USD,
         )
     }
 

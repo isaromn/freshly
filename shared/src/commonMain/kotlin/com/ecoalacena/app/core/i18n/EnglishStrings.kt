@@ -32,6 +32,22 @@ object EnglishStrings : AppStrings {
     override val shoppingShareTitle = "🛒 *Freshly - Shopping List:*"
     override val copiedToClipboard = "Copied to clipboard!"
     override val shareError = "Couldn't share the list."
+    override fun expiredBannerTitle(count: Int) =
+        if (count == 1) "1 item expired" else "$count items expired"
+    override val expiredBannerBody =
+        "Did you eat them or did they go to waste? Mark each one below, or record them all as wasted."
+    override val registerAllAsWasted = "Record all as wasted"
+    override val registerAsWasted = "Record as wasted"
+    override fun confirmWasteExpiredTitle(count: Int) =
+        if (count == 1) "Record 1 expired item as wasted?" else "Record $count expired items as wasted?"
+    override val confirmWasteExpiredBody =
+        "They will leave the pantry and count as food and money wasted. If you ate any of them, " +
+            "cancel and mark it as consumed on its card."
+    override fun wastedExpiredMessage(count: Int) =
+        if (count == 1) "1 item recorded as wasted." else "$count items recorded as wasted."
+    override val moneyWastedTitle = "Money lost to waste"
+    override fun explainMoneyWasted(kg: String, pricePerKg: String) =
+        "$kg kg of food thrown away (expired or spoiled), at an average price of COP $pricePerKg per kg."
     override val spoiledTitle = "⚠️ Not fit to eat"
     override fun ecoAlternative(tip: String) = "🌿 Eco alternative: $tip"
     override val spoiledDefaultTip = "Put it in the compost or the organic waste bin."
@@ -168,7 +184,7 @@ object EnglishStrings : AppStrings {
     override fun confirmDiscardedTitle(name: String) = "Mark “$name” as discarded?"
 
     override val confirmDiscardedBody = "It will be removed from the pantry as waste (it spoiled, " +
-        "expired or you threw it out). It won't add to your impact."
+        "expired or you threw it out) and will count as food and money wasted."
 
     // ---- Add / edit item dialog ----
     override val addItemTitle = "Add Item"

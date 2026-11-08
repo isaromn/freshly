@@ -40,6 +40,9 @@ class PantryViewModel(
     private val selectedCategory = MutableStateFlow<Category?>(null)
     private val activeDialog = MutableStateFlow<PantryDialog?>(null)
 
+    /** The whole pantry as last read, whatever the category filter. */
+    private var pantryItems: List<PantryItem> = emptyList()
+
     private val _state = MutableStateFlow(PantryState())
     val state: StateFlow<PantryState> = _state.asStateFlow()
 
@@ -53,6 +56,7 @@ class PantryViewModel(
             selectedCategory,
             activeDialog,
         ) { items, savedKg, category, dialog ->
+            pantryItems = items
             buildState(items, savedKg, category, dialog)
         }
             .onEach { newState -> _state.value = newState }
@@ -67,6 +71,8 @@ class PantryViewModel(
             is PantryIntent.DiscardClicked -> askToConfirmDiscard(intent.itemId)
             is PantryIntent.MarkConsumed -> markConsumed(intent.itemId)
             is PantryIntent.DiscardItem -> discardItem(intent.itemId)
+            PantryIntent.WasteExpiredClicked -> askToConfirmWasteExpired()
+            PantryIntent.WasteAllExpired -> wasteAllExpired()
             PantryIntent.AddItemClicked -> activeDialog.value = PantryDialog.Add
             is PantryIntent.EditItem -> editItem(intent.itemId)
             PantryIntent.DismissDialog -> activeDialog.value = null
@@ -217,6 +223,32 @@ class PantryViewModel(
         launchSafely(error = { discardError }) {
             repository.discard(ui.item, nowMillis())
             sendEffect(PantryEffect.ShowMessage(strings().discardedMessage(ui.item.name)))
+        }
+    }
+
+    private fun expiredItems(): List<PantryItem> {
+        val now = nowMillis()
+        return pantryItems.filter { item -> item.expirationDate?.let { it < now } ?: false }
+    }
+
+    private fun askToConfirmWasteExpired() {
+        val count = expiredItems().size
+        if (count > 0) activeDialog.value = PantryDialog.ConfirmWasteExpired(count)
+    }
+
+    /**
+     * Expired food is never removed silently: it waits in the pantry until the user says what
+     * happened. Here they say it was all thrown away, so it is recorded as wasted food.
+     */
+    private fun wasteAllExpired() {
+        val expired = expiredItems()
+        activeDialog.value = null
+        if (expired.isEmpty()) return
+
+        launchSafely(error = { discardError }) {
+            val now = nowMillis()
+            expired.forEach { item -> repository.discard(item, now) }
+            sendEffect(PantryEffect.ShowMessage(strings().wastedExpiredMessage(expired.size)))
         }
     }
 

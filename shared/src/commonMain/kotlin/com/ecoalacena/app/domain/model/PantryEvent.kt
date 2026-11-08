@@ -3,6 +3,8 @@ package com.ecoalacena.app.domain.model
 /** Why an item left the pantry. */
 enum class PantryEventKind {
     CONSUMED,
+
+    /** Thrown away: it expired, spoiled or went to compost. This is the food that was wasted. */
     DISCARDED,
 }
 
@@ -15,3 +17,18 @@ data class PantryEvent(
     val kind: PantryEventKind,
     val happenedAt: Long,
 )
+
+/** Estimated kilograms of food thrown away in these events (items whose weight cannot be estimated are skipped). */
+fun List<PantryEvent>.wastedKg(): Double =
+    filter { it.kind == PantryEventKind.DISCARDED }
+        .sumOf { event ->
+            PantryItem(
+                id = "",
+                name = event.name,
+                quantity = event.quantity,
+                unit = event.unit,
+                expirationDate = null,
+                isOrganic = false,
+                category = event.category,
+            ).estimatedWeightKg() ?: 0.0
+        }

@@ -139,6 +139,16 @@ private fun PantryContent(
                 )
             }
 
+            // Expired food is never removed on its own: this asks what happened to it.
+            if (state.expiredCount > 0) {
+                item(key = "expired-banner", span = { GridItemSpan(maxLineSpan) }) {
+                    ExpiredItemsBanner(
+                        count = state.expiredCount,
+                        onWasteAll = { onIntent(PantryIntent.WasteExpiredClicked) },
+                    )
+                }
+            }
+
             item(key = "filters", span = { GridItemSpan(maxLineSpan) }) {
                 CategoryFilters(
                     selectedCategory = state.selectedCategory,
@@ -214,6 +224,12 @@ private fun PantryDialogs(
         is PantryDialog.ConfirmDiscarded -> ConfirmDiscardedDialog(
             item = dialog.item,
             onConfirm = { onIntent(PantryIntent.DiscardItem(dialog.item.id)) },
+            onDismiss = dismiss,
+        )
+
+        is PantryDialog.ConfirmWasteExpired -> ConfirmWasteExpiredDialog(
+            count = dialog.count,
+            onConfirm = { onIntent(PantryIntent.WasteAllExpired) },
             onDismiss = dismiss,
         )
     }

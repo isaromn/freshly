@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.MoneyOff
 import androidx.compose.material.icons.filled.Park
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Savings
@@ -75,6 +76,12 @@ private val ON_CALORIES_CONTAINER_LIGHT = Color(0xFF5C2600)
 private val CALORIES_CONTAINER_DARK = Color(0xFF4F2A10)
 private val ON_CALORIES_CONTAINER_DARK = Color(0xFFFFD2AE)
 
+// Waste tone: a soft coral red.
+private val WASTE_CONTAINER_LIGHT = Color(0xFFFFDAD3)
+private val ON_WASTE_CONTAINER_LIGHT = Color(0xFF6E1B0F)
+private val WASTE_CONTAINER_DARK = Color(0xFF5C1D14)
+private val ON_WASTE_CONTAINER_DARK = Color(0xFFFFC9BD)
+
 // Meals tone: mint.
 private val MEALS_CONTAINER_LIGHT = Color(0xFFCDF3E4)
 private val ON_MEALS_CONTAINER_LIGHT = Color(0xFF00382A)
@@ -103,6 +110,9 @@ private enum class MetricTone {
     /** Warm orange, only for calories, so they don't look like the money card. */
     CALORIES,
 
+    /** Soft red, for the money lost to waste, so it reads as a warning next to the money saved. */
+    WASTE,
+
     /** Mint, for the plates of food saved. */
     MEALS,
 
@@ -127,6 +137,11 @@ private fun MetricTone.colors(): ToneColors {
             ToneColors(CALORIES_CONTAINER_DARK, ON_CALORIES_CONTAINER_DARK)
         } else {
             ToneColors(CALORIES_CONTAINER_LIGHT, ON_CALORIES_CONTAINER_LIGHT)
+        }
+        MetricTone.WASTE -> if (scheme.background.luminance() < 0.5f) {
+            ToneColors(WASTE_CONTAINER_DARK, ON_WASTE_CONTAINER_DARK)
+        } else {
+            ToneColors(WASTE_CONTAINER_LIGHT, ON_WASTE_CONTAINER_LIGHT)
         }
         MetricTone.MEALS -> if (scheme.background.luminance() < 0.5f) {
             ToneColors(MEALS_CONTAINER_DARK, ON_MEALS_CONTAINER_DARK)
@@ -196,6 +211,25 @@ private fun ImpactContent(
                     copAmount = metrics.moneySavedCop,
                     usdAmount = metrics.moneySavedUsd,
                     onCurrencySelected = { currency -> onIntent(ImpactIntent.SelectCurrency(currency)) },
+                )
+            }
+
+            // Next to the money saved: what thrown-away food cost, in the same currency.
+            item(key = "money-wasted") {
+                val separator = strings.groupSeparator()
+                val animatedWasted = rememberAnimatedValue(
+                    if (state.currency == ImpactCurrency.COP) metrics.moneyWastedCop else metrics.moneyWastedUsd,
+                )
+                MetricCard(
+                    icon = Icons.Filled.MoneyOff,
+                    title = strings.moneyWastedTitle,
+                    value = moneyText(animatedWasted, state.currency, separator),
+                    unit = state.currency.name,
+                    explanation = strings.explainMoneyWasted(
+                        kg = formatDecimal(metrics.wastedKg, 1),
+                        pricePerKg = formatGrouped(CalculateImpactUseCase.AVERAGE_PRICE_COP_PER_KG.toLong(), separator),
+                    ),
+                    tone = MetricTone.WASTE,
                 )
             }
 
@@ -388,6 +422,13 @@ private fun EmptyImpactHint(modifier: Modifier = Modifier) {
     }
 }
 
+/** "$ 45.000" in pesos, "US$ 14.17" in dollars. */
+private fun moneyText(amount: Double, currency: ImpactCurrency, separator: Char): String =
+    when (currency) {
+        ImpactCurrency.COP -> "\$ ${formatGrouped(amount.toLong(), separator)}"
+        ImpactCurrency.USD -> "US\$ ${formatDecimal(amount, 2)}"
+    }
+
 @Composable
 private fun MoneyCard(
     currency: ImpactCurrency,
@@ -404,10 +445,7 @@ private fun MoneyCard(
     val animatedAmount = rememberAnimatedValue(
         if (currency == ImpactCurrency.COP) copAmount else usdAmount,
     )
-    val valueText = when (currency) {
-        ImpactCurrency.COP -> "\$ ${formatGrouped(animatedAmount.toLong(), separator)}"
-        ImpactCurrency.USD -> "US\$ ${formatDecimal(animatedAmount, 2)}"
-    }
+    val valueText = moneyText(animatedAmount, currency, separator)
 
     MetricCard(
         icon = Icons.Filled.Savings,

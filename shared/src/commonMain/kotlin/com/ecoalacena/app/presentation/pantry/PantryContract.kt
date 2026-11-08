@@ -32,8 +32,11 @@ sealed interface PantryDialog {
      */
     data class ConfirmConsumed(val item: PantryItem, val impactKg: Double?) : PantryDialog
 
-    /** Asks the user to confirm that [item] was thrown away; it never counts towards the impact. */
+    /** Asks the user to confirm that [item] was thrown away; it counts as wasted food. */
     data class ConfirmDiscarded(val item: PantryItem) : PantryDialog
+
+    /** Asks the user to confirm that all [count] expired items were thrown away. */
+    data class ConfirmWasteExpired(val count: Int) : PantryDialog
 }
 
 /** What the user typed in the form. [id] is `null` when a new item is being added. */
@@ -74,8 +77,14 @@ sealed interface PantryIntent {
     /** Confirmed: the item was eaten. Removes it and, if it counts, adds its weight to the impact. */
     data class MarkConsumed(val itemId: String) : PantryIntent
 
-    /** Confirmed: the item was thrown away. Removes it without adding anything to the impact. */
+    /** Confirmed: the item was thrown away. It leaves the pantry and is recorded as wasted food. */
     data class DiscardItem(val itemId: String) : PantryIntent
+
+    /** The expired-items banner asked to record them all as wasted: opens the confirmation. */
+    data object WasteExpiredClicked : PantryIntent
+
+    /** Confirmed: every expired item was thrown away. */
+    data object WasteAllExpired : PantryIntent
 
     /** Opens the empty form to add an item manually. */
     data object AddItemClicked : PantryIntent

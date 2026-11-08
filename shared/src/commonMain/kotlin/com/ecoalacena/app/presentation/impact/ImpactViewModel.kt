@@ -2,6 +2,7 @@ package com.ecoalacena.app.presentation.impact
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ecoalacena.app.domain.model.wastedKg
 import com.ecoalacena.app.domain.repository.PantryRepository
 import com.ecoalacena.app.domain.usecase.CalculateImpactUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,11 +22,13 @@ class ImpactViewModel(
         repository.observeSavedKg(),
         repository.observeSavedCalories(),
         repository.observeSavedProteinGrams(),
+        // Every thrown-away item ever recorded: the money lost is a running total, like the money saved.
+        repository.observeEventsSince(0L),
         selectedCurrency,
-    ) { savedKg, savedCalories, savedProteinGrams, currency ->
+    ) { savedKg, savedCalories, savedProteinGrams, events, currency ->
         ImpactState(
             isLoading = false,
-            metrics = calculateImpact(savedKg, savedCalories, savedProteinGrams),
+            metrics = calculateImpact(savedKg, savedCalories, savedProteinGrams, wastedKg = events.wastedKg()),
             currency = currency,
         )
     }.stateIn(

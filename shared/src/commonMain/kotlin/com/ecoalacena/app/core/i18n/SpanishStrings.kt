@@ -31,6 +31,22 @@ object SpanishStrings : AppStrings {
     override val shoppingShareTitle = "🛒 *Freshly - Lista de compras:*"
     override val copiedToClipboard = "¡Lista copiada al portapapeles!"
     override val shareError = "No se pudo compartir la lista."
+    override fun expiredBannerTitle(count: Int) =
+        if (count == 1) "1 alimento vencido" else "$count alimentos vencidos"
+    override val expiredBannerBody =
+        "¿Los consumiste o se desperdiciaron? Márcalos uno por uno abajo o regístralos todos como desperdicio."
+    override val registerAllAsWasted = "Registrar todos como desperdicio"
+    override val registerAsWasted = "Registrar como desperdicio"
+    override fun confirmWasteExpiredTitle(count: Int) =
+        if (count == 1) "¿Registrar 1 vencido como desperdicio?" else "¿Registrar $count vencidos como desperdicio?"
+    override val confirmWasteExpiredBody =
+        "Saldrán de la alacena y contarán como comida y dinero desperdiciados. Si consumiste alguno, " +
+            "cancela y márcalo como consumido en su tarjeta."
+    override fun wastedExpiredMessage(count: Int) =
+        if (count == 1) "1 alimento registrado como desperdicio." else "$count alimentos registrados como desperdicio."
+    override val moneyWastedTitle = "Dinero perdido por desperdicio"
+    override fun explainMoneyWasted(kg: String, pricePerKg: String) =
+        "$kg kg de comida botada (vencida o dañada), a un precio medio de COP $pricePerKg por kg."
     override val spoiledTitle = "⚠️ Alimento no apto para consumo"
     override fun ecoAlternative(tip: String) = "🌿 Alternativa ecológica: $tip"
     override val spoiledDefaultTip = "Llévalo al compost o a la caneca de residuos orgánicos."
@@ -166,7 +182,7 @@ object SpanishStrings : AppStrings {
     override fun confirmDiscardedTitle(name: String) = "¿Marcar «$name» como desechado?"
 
     override val confirmDiscardedBody = "Se quitará de la alacena como desperdicio (se dañó, " +
-        "venció o lo botaste). No suma a tu impacto."
+        "venció o lo botaste) y contará como comida y dinero desperdiciados."
 
     // ---- Add / edit item dialog ----
     override val addItemTitle = "Agregar alimento"
