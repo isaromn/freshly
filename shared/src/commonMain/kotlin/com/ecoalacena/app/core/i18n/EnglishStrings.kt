@@ -47,7 +47,7 @@ object EnglishStrings : AppStrings {
     override val protein = "Protein"
     override val carbs = "Carbs"
     override val fat = "Fat"
-    override val nutritionDisclaimer = "AI estimate for guidance, not medical advice."
+    override val nutritionDisclaimer = "Estimate for guidance, not medical advice."
     override val nutritionSectionTitle = "Nutrition & Health"
     override val caloriesSavedTitle = "Calories saved"
     override val mealsSavedTitle = "Servings saved"

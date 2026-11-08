@@ -118,8 +118,8 @@ class GetHybridRecipeUseCaseTest {
         assertEquals(4.5f, aiRecipe.proteinGrams)
         assertEquals(22f, aiRecipe.carbsGrams)
         assertEquals(8f, aiRecipe.fatGrams)
-        // Offline recipes have no nutrition estimate.
-        assertTrue(recipes.drop(1).none { it.hasNutrition })
+        // Offline recipes carry their own estimate, built from the pantry items they use.
+        assertTrue(recipes.drop(1).all { it.hasNutrition })
     }
 
     @Test

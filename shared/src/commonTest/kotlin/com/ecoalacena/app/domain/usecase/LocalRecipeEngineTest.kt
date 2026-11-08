@@ -1,6 +1,7 @@
 package com.ecoalacena.app.domain.usecase
 
 import com.ecoalacena.app.core.i18n.AppLanguage
+import com.ecoalacena.app.domain.model.Category
 import com.ecoalacena.app.domain.model.RecipeCategory
 import com.ecoalacena.app.domain.model.RecipeSource
 import com.ecoalacena.app.domain.recipe.LocalRecipeEngine
@@ -54,6 +55,55 @@ class LocalRecipeEngineTest {
         val soup = recipes.first { it.title == "Sopa casera de verduras" }
 
         assertEquals(listOf("1", "2"), soup.pantryItemIds)
+    }
+
+    @Test
+    fun offlineRecipesEstimateNutritionFromTheScannedValues() {
+        // 2 kg of carrots of 41 kcal/100 g (820 kcal) + 1 tablespoon of oil (120 kcal); 2 kg serves 6.
+        val carrots = testItem("1", "Zanahoria", quantity = 2.0).copy(
+            caloriesPerUnit = 41,
+            proteinGrams = 0.9f,
+            carbsGrams = 10f,
+            fatGrams = 0.2f,
+        )
+
+        val soup = engine.suggest(listOf(carrots)).first { it.title == "Sopa casera de verduras" }
+
+        assertEquals(6, soup.servings)
+        assertEquals(157, soup.caloriesPerServing)
+        assertEquals(3.0f, soup.proteinGrams)
+        assertEquals(33.3f, soup.carbsGrams)
+    }
+
+    @Test
+    fun itemsWithoutNutritionUseTypicalValuesOfTheirCategory() {
+        val chicken = testItem("1", "Pollo", quantity = 0.35, category = Category.MEAT_FISH)
+
+        val stew = engine.suggest(listOf(chicken), limit = 10).first { it.title == "Guiso casero con verduras" }
+
+        // 350 g of meat at 170 kcal/100 g (595) + 2 tablespoons of oil (240), one serving.
+        assertEquals(1, stew.servings)
+        assertEquals(835, stew.caloriesPerServing)
+    }
+
+    @Test
+    fun recipesThatNeedTwoIngredientsOnlyAppearWithBoth() {
+        val withRiceOnly = engine.suggest(listOf(testItem("1", "Arroz")), limit = 20).map { it.title }
+        val withBoth = engine.suggest(listOf(testItem("1", "Arroz"), testItem("2", "Leche")), limit = 20).map { it.title }
+
+        assertTrue("Arroz con leche" !in withRiceOnly)
+        assertTrue("Arroz con leche" in withBoth)
+    }
+
+    @Test
+    fun aVariedPantryGetsManyDifferentRecipes() {
+        val pantry = listOf("Huevos", "Papas", "Pan", "Leche", "Manzanas", "Lechuga", "Tomate", "Pollo", "Queso")
+            .mapIndexed { index, name -> testItem("$index", name) }
+
+        val titles = engine.suggest(pantry, limit = 20).map { it.title }
+
+        assertTrue(titles.size >= 8, "Only $titles")
+        assertEquals(titles.size, titles.toSet().size)
     }
 
     @Test

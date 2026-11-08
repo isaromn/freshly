@@ -210,8 +210,8 @@ class GetHybridRecipeUseCase(
         const val MAX_PANTRY_INGREDIENTS = 20
         const val MAX_NAME_LENGTH = 60
         const val MAX_PREP_MINUTES = 600
-        const val LOCAL_RECIPES_WITH_AI = 2
-        const val LOCAL_RECIPES_WITHOUT_AI = 3
+        const val LOCAL_RECIPES_WITH_AI = 4
+        const val LOCAL_RECIPES_WITHOUT_AI = 5
         const val PHOTO_TIMEOUT_MILLIS = 5_000L
         const val MAX_SERVINGS = 20
         const val MAX_CALORIES_PER_SERVING = 5_000

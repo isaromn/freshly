@@ -100,6 +100,12 @@ data class PantryItem(
     /** Estimated grams of protein of the whole item, or `null` when the protein is unknown. */
     fun totalProteinGrams(): Double? = proteinGrams?.let { it * nutritionBasisCount() }
 
+    /** Estimated grams of carbohydrates of the whole item, or `null` when they are unknown. */
+    fun totalCarbsGrams(): Double? = carbsGrams?.let { it * nutritionBasisCount() }
+
+    /** Estimated grams of fat of the whole item, or `null` when it is unknown. */
+    fun totalFatGrams(): Double? = fatGrams?.let { it * nutritionBasisCount() }
+
     /** How many times [nutritionBasis] fits in [quantity]: 1 kg holds ten portions of 100 g. */
     private fun nutritionBasisCount(): Double =
         when (unit.lowercase()) {
