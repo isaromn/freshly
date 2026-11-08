@@ -35,8 +35,6 @@ sealed interface PantryDialog {
     /** Asks the user to confirm that [item] was thrown away; it counts as wasted food. */
     data class ConfirmDiscarded(val item: PantryItem) : PantryDialog
 
-    /** Asks the user to confirm that all [count] expired items were thrown away. */
-    data class ConfirmWasteExpired(val count: Int) : PantryDialog
 }
 
 /** What the user typed in the form. [id] is `null` when a new item is being added. */
@@ -59,6 +57,8 @@ data class PantryState(
     val totalItems: Int = 0,
     val expiringSoonCount: Int = 0,
     val expiredCount: Int = 0,
+    /** Every expired item, whatever the category filter, most overdue first. */
+    val expiredItems: List<PantryItemUi> = emptyList(),
     /** Kilograms of food consumed before it expired. */
     val savedKg: Double = 0.0,
     val dialog: PantryDialog? = null,
@@ -80,10 +80,7 @@ sealed interface PantryIntent {
     /** Confirmed: the item was thrown away. It leaves the pantry and is recorded as wasted food. */
     data class DiscardItem(val itemId: String) : PantryIntent
 
-    /** The expired-items banner asked to record them all as wasted: opens the confirmation. */
-    data object WasteExpiredClicked : PantryIntent
-
-    /** Confirmed: every expired item was thrown away. */
+    /** Expired food must not be eaten: takes every expired item out of the pantry as wasted food. */
     data object WasteAllExpired : PantryIntent
 
     /** Opens the empty form to add an item manually. */

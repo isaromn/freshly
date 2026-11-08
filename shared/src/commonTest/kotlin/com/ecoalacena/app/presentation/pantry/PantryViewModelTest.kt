@@ -228,14 +228,13 @@ class PantryViewModelTest {
             item("older", expiresInDays = -5, category = Category.BAKERY),
         )
 
-        viewModel.onIntent(PantryIntent.WasteExpiredClicked)
-        assertEquals(PantryDialog.ConfirmWasteExpired(2), viewModel.state.value.dialog)
+        assertEquals(listOf("older", "old"), viewModel.state.value.expiredItems.map { it.item.id })
 
         viewModel.onIntent(PantryIntent.WasteAllExpired)
 
         assertEquals(listOf("fresh"), viewModel.state.value.items.map { it.item.id })
         assertEquals(0, viewModel.state.value.expiredCount)
-        assertNull(viewModel.state.value.dialog)
+        assertTrue(viewModel.state.value.expiredItems.isEmpty())
         val effect = assertIs<PantryEffect.ShowMessage>(viewModel.effects.first())
         assertEquals(SpanishStrings.wastedExpiredMessage(2), effect.message)
     }

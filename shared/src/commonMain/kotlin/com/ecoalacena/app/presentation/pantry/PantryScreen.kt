@@ -139,12 +139,12 @@ private fun PantryContent(
                 )
             }
 
-            // Expired food is never removed on its own: this asks what happened to it.
+            // Expired food is not safe to eat: this lists it and says what to do with it.
             if (state.expiredCount > 0) {
                 item(key = "expired-banner", span = { GridItemSpan(maxLineSpan) }) {
                     ExpiredItemsBanner(
-                        count = state.expiredCount,
-                        onWasteAll = { onIntent(PantryIntent.WasteExpiredClicked) },
+                        items = state.expiredItems,
+                        onRemoveAll = { onIntent(PantryIntent.WasteAllExpired) },
                     )
                 }
             }
@@ -224,12 +224,6 @@ private fun PantryDialogs(
         is PantryDialog.ConfirmDiscarded -> ConfirmDiscardedDialog(
             item = dialog.item,
             onConfirm = { onIntent(PantryIntent.DiscardItem(dialog.item.id)) },
-            onDismiss = dismiss,
-        )
-
-        is PantryDialog.ConfirmWasteExpired -> ConfirmWasteExpiredDialog(
-            count = dialog.count,
-            onConfirm = { onIntent(PantryIntent.WasteAllExpired) },
             onDismiss = dismiss,
         )
     }
@@ -442,7 +436,11 @@ private fun PantryItemCard(
                 }
             }
 
-            ItemActions(onConsumed = onConsumed, onDiscarded = onDiscarded)
+            // Expired food must not be eaten, so its card only offers to throw it away.
+            ItemActions(
+                onConsumed = onConsumed.takeIf { itemUi.freshness != FreshnessStatus.EXPIRED },
+                onDiscarded = onDiscarded,
+            )
         }
     }
 }
@@ -454,7 +452,8 @@ private fun PantryItemCard(
  */
 @Composable
 private fun ItemActions(
-    onConsumed: () -> Unit,
+    /** `null` hides the button (expired food). */
+    onConsumed: (() -> Unit)?,
     onDiscarded: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -464,7 +463,7 @@ private fun ItemActions(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        FilledTonalButton(
+        if (onConsumed != null) FilledTonalButton(
             onClick = onConsumed,
             modifier = Modifier.weight(1f),
             colors = ButtonDefaults.filledTonalButtonColors(

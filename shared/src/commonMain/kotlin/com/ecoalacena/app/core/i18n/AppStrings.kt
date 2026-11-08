@@ -1,6 +1,7 @@
 package com.ecoalacena.app.core.i18n
 
 import com.ecoalacena.app.domain.model.Category
+import com.ecoalacena.app.domain.model.DisposalMethod
 import com.ecoalacena.app.domain.model.NutritionBasis
 import com.ecoalacena.app.domain.model.RecipeDifficulty
 
@@ -39,9 +40,9 @@ interface AppStrings {
     fun expiredBannerTitle(count: Int): String
     val expiredBannerBody: String
     val registerAllAsWasted: String
-    val registerAsWasted: String
-    fun confirmWasteExpiredTitle(count: Int): String
-    val confirmWasteExpiredBody: String
+    val whatToDoWithThem: String
+    fun disposalTitle(method: DisposalMethod): String
+    fun disposalTip(method: DisposalMethod): String
     fun wastedExpiredMessage(count: Int): String
     val moneyWastedTitle: String
     fun explainMoneyWasted(kg: String, pricePerKg: String): String

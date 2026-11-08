@@ -1,6 +1,7 @@
 package com.ecoalacena.app.core.i18n
 
 import com.ecoalacena.app.domain.model.Category
+import com.ecoalacena.app.domain.model.DisposalMethod
 import com.ecoalacena.app.domain.model.NutritionBasis
 import com.ecoalacena.app.domain.model.RecipeDifficulty
 
@@ -34,16 +35,26 @@ object SpanishStrings : AppStrings {
     override fun expiredBannerTitle(count: Int) =
         if (count == 1) "1 alimento vencido" else "$count alimentos vencidos"
     override val expiredBannerBody =
-        "¿Los consumiste o se desperdiciaron? Márcalos uno por uno abajo o regístralos todos como desperdicio."
-    override val registerAllAsWasted = "Registrar todos como desperdicio"
-    override val registerAsWasted = "Registrar como desperdicio"
-    override fun confirmWasteExpiredTitle(count: Int) =
-        if (count == 1) "¿Registrar 1 vencido como desperdicio?" else "¿Registrar $count vencidos como desperdicio?"
-    override val confirmWasteExpiredBody =
-        "Saldrán de la alacena y contarán como comida y dinero desperdiciados. Si consumiste alguno, " +
-            "cancela y márcalo como consumido en su tarjeta."
+        "Ya no son aptos para consumo: se retirarán de tu alacena y contarán como desperdicio."
+    override val registerAllAsWasted = "Retirar de la alacena"
+    override val whatToDoWithThem = "¿Qué hacer con ellos?"
+    override fun disposalTitle(method: DisposalMethod) =
+        when (method) {
+            DisposalMethod.COMPOST -> "🌱 Compost o abono"
+            DisposalMethod.ORGANIC_WASTE -> "🗑️ Caneca de residuos orgánicos"
+            DisposalMethod.RECYCLE_CONTAINER -> "♻️ Recicla el envase"
+        }
+    override fun disposalTip(method: DisposalMethod) =
+        when (method) {
+            DisposalMethod.COMPOST ->
+                "Pícalos y agrégalos a tu compost, o entiérralos cerca de tus plantas como abono natural."
+            DisposalMethod.ORGANIC_WASTE ->
+                "Ciérralos bien en una bolsa y llévalos a la caneca de orgánicos. No al compost casero: atraen plagas."
+            DisposalMethod.RECYCLE_CONTAINER ->
+                "Vacía la bebida en el desagüe, enjuaga el envase y llévalo al reciclaje."
+        }
     override fun wastedExpiredMessage(count: Int) =
-        if (count == 1) "1 alimento registrado como desperdicio." else "$count alimentos registrados como desperdicio."
+        if (count == 1) "1 alimento vencido retirado de tu alacena." else "$count alimentos vencidos retirados de tu alacena."
     override val moneyWastedTitle = "Dinero perdido por desperdicio"
     override fun explainMoneyWasted(kg: String, pricePerKg: String) =
         "$kg kg de comida botada (vencida o dañada), a un precio medio de COP $pricePerKg por kg."

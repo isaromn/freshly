@@ -71,7 +71,6 @@ class PantryViewModel(
             is PantryIntent.DiscardClicked -> askToConfirmDiscard(intent.itemId)
             is PantryIntent.MarkConsumed -> markConsumed(intent.itemId)
             is PantryIntent.DiscardItem -> discardItem(intent.itemId)
-            PantryIntent.WasteExpiredClicked -> askToConfirmWasteExpired()
             PantryIntent.WasteAllExpired -> wasteAllExpired()
             PantryIntent.AddItemClicked -> activeDialog.value = PantryDialog.Add
             is PantryIntent.EditItem -> editItem(intent.itemId)
@@ -99,6 +98,9 @@ class PantryViewModel(
             totalItems = allItems.size,
             expiringSoonCount = allItems.count { it.freshness == FreshnessStatus.EXPIRING_SOON },
             expiredCount = allItems.count { it.freshness == FreshnessStatus.EXPIRED },
+            expiredItems = allItems
+                .filter { it.freshness == FreshnessStatus.EXPIRED }
+                .sortedBy { it.item.expirationDate },
             savedKg = savedKg,
             dialog = dialog,
         )
@@ -231,14 +233,9 @@ class PantryViewModel(
         return pantryItems.filter { item -> item.expirationDate?.let { it < now } ?: false }
     }
 
-    private fun askToConfirmWasteExpired() {
-        val count = expiredItems().size
-        if (count > 0) activeDialog.value = PantryDialog.ConfirmWasteExpired(count)
-    }
-
     /**
-     * Expired food is never removed silently: it waits in the pantry until the user says what
-     * happened. Here they say it was all thrown away, so it is recorded as wasted food.
+     * Expired food is not safe to eat, so it is taken out of the pantry and recorded as wasted
+     * food. It is never removed silently: the banner lists it first, with what to do with it.
      */
     private fun wasteAllExpired() {
         val expired = expiredItems()

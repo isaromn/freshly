@@ -1,6 +1,7 @@
 package com.ecoalacena.app.core.i18n
 
 import com.ecoalacena.app.domain.model.Category
+import com.ecoalacena.app.domain.model.DisposalMethod
 import com.ecoalacena.app.domain.model.NutritionBasis
 import com.ecoalacena.app.domain.model.RecipeDifficulty
 
@@ -35,16 +36,26 @@ object EnglishStrings : AppStrings {
     override fun expiredBannerTitle(count: Int) =
         if (count == 1) "1 item expired" else "$count items expired"
     override val expiredBannerBody =
-        "Did you eat them or did they go to waste? Mark each one below, or record them all as wasted."
-    override val registerAllAsWasted = "Record all as wasted"
-    override val registerAsWasted = "Record as wasted"
-    override fun confirmWasteExpiredTitle(count: Int) =
-        if (count == 1) "Record 1 expired item as wasted?" else "Record $count expired items as wasted?"
-    override val confirmWasteExpiredBody =
-        "They will leave the pantry and count as food and money wasted. If you ate any of them, " +
-            "cancel and mark it as consumed on its card."
+        "They are no longer safe to eat: they will be taken out of your pantry and counted as wasted food."
+    override val registerAllAsWasted = "Take out of my pantry"
+    override val whatToDoWithThem = "What to do with them"
+    override fun disposalTitle(method: DisposalMethod) =
+        when (method) {
+            DisposalMethod.COMPOST -> "🌱 Compost or fertiliser"
+            DisposalMethod.ORGANIC_WASTE -> "🗑️ Organic waste bin"
+            DisposalMethod.RECYCLE_CONTAINER -> "♻️ Recycle the container"
+        }
+    override fun disposalTip(method: DisposalMethod) =
+        when (method) {
+            DisposalMethod.COMPOST ->
+                "Chop them and add them to your compost, or bury them near your plants as natural fertiliser."
+            DisposalMethod.ORGANIC_WASTE ->
+                "Close them well in a bag and put them in the organic waste bin. Not in home compost: they attract pests."
+            DisposalMethod.RECYCLE_CONTAINER ->
+                "Pour the drink down the drain, rinse the container and put it in the recycling."
+        }
     override fun wastedExpiredMessage(count: Int) =
-        if (count == 1) "1 item recorded as wasted." else "$count items recorded as wasted."
+        if (count == 1) "1 expired item taken out of your pantry." else "$count expired items taken out of your pantry."
     override val moneyWastedTitle = "Money lost to waste"
     override fun explainMoneyWasted(kg: String, pricePerKg: String) =
         "$kg kg of food thrown away (expired or spoiled), at an average price of COP $pricePerKg per kg."

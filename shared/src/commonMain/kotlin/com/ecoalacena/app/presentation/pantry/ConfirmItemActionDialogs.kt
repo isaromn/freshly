@@ -70,27 +70,6 @@ fun ConfirmDiscardedDialog(
 }
 
 @Composable
-fun ConfirmWasteExpiredDialog(
-    count: Int,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val strings = LocalAppStrings.current
-
-    ConfirmActionDialog(
-        icon = Icons.Filled.Delete,
-        title = strings.confirmWasteExpiredTitle(count),
-        body = strings.confirmWasteExpiredBody,
-        confirmLabel = strings.registerAsWasted,
-        accent = MaterialTheme.colorScheme.error,
-        onConfirm = onConfirm,
-        onDismiss = onDismiss,
-        modifier = modifier,
-    )
-}
-
-@Composable
 private fun ConfirmActionDialog(
     icon: ImageVector,
     title: String,
