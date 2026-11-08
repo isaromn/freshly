@@ -2,19 +2,28 @@ package com.ecoalacena.app.presentation.scan
 
 import com.ecoalacena.app.core.MILLIS_PER_DAY
 import com.ecoalacena.app.core.i18n.AppLanguage
+import com.ecoalacena.app.core.i18n.SpanishStrings
 import com.ecoalacena.app.data.remote.ai.GeminiConfig
 import com.ecoalacena.app.data.remote.ai.GeminiVisionService
+import com.ecoalacena.app.data.remote.ai.geminiJson
 import com.ecoalacena.app.domain.model.Category
+import com.ecoalacena.app.domain.model.PantryEventKind
 import com.ecoalacena.app.domain.usecase.AnalyzeFoodUseCase
 import com.ecoalacena.app.testing.FakePantryRepository
 import com.ecoalacena.app.testing.TEST_NOW
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.http.HttpHeaders
+import io.ktor.http.headersOf
+import io.ktor.serialization.kotlinx.json.json
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -165,6 +174,63 @@ class ScanViewModelTest {
     }
 
     @Test
+    fun spoiledFoodIsNeverSavedAsPantryFood() = runTest {
+        val viewModel = viewModelScanning(SPOILED_AND_FRESH)
+        viewModel.onIntent(ScanIntent.ImageSelected(ScanImage(byteArrayOf(1), "image/jpeg")))
+        viewModel.state.first { it.status == ScanStatus.REVIEW }
+        assertEquals(listOf("Manzanas podridas"), viewModel.state.value.spoiledDrafts.map { it.name })
+
+        viewModel.onIntent(ScanIntent.Confirm)
+        viewModel.effects.first()
+
+        assertEquals(listOf("Leche"), repository.items.value.map { it.name })
+    }
+
+    @Test
+    fun compostingRecordsTheFoodAsWastedAndTakesItOffTheList() = runTest {
+        val viewModel = viewModelScanning(SPOILED_AND_FRESH)
+        viewModel.onIntent(ScanIntent.ImageSelected(ScanImage(byteArrayOf(1), "image/jpeg")))
+        val rotten = viewModel.state.first { it.status == ScanStatus.REVIEW }.spoiledDrafts.single()
+
+        viewModel.onIntent(ScanIntent.CompostSpoiled(rotten.id))
+
+        assertTrue(viewModel.state.value.spoiledDrafts.isEmpty())
+        assertTrue(repository.items.value.isEmpty())
+        assertEquals(listOf(PantryEventKind.DISCARDED), repository.events.value.map { it.kind })
+        assertEquals(0.0, repository.savedKg.value)
+        assertEquals(
+            ScanEffect.ShowMessage(SpanishStrings.compostedMessage("Manzanas podridas")),
+            viewModel.effects.first(),
+        )
+    }
+
+    /** A view model whose scanner answers [modelJson], as Gemini would. */
+    private fun viewModelScanning(modelJson: String): ScanViewModel {
+        val escaped = modelJson.replace("\"", "\\\"")
+        val client = HttpClient(
+            MockEngine {
+                respond(
+                    content = """{"candidates":[{"content":{"parts":[{"text":"$escaped"}]}}]}""",
+                    headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                )
+            },
+        ) {
+            install(ContentNegotiation) { json(geminiJson) }
+        }
+        val analyzeFood = AnalyzeFoodUseCase(
+            GeminiVisionService(client, GeminiConfig(apiKey = "test-key")),
+            nowMillis = { TEST_NOW },
+            language = { AppLanguage.ES },
+        )
+        return ScanViewModel(
+            analyzeFood = analyzeFood,
+            repository = repository,
+            nowMillis = { TEST_NOW },
+            strings = { SpanishStrings },
+        )
+    }
+
+    @Test
     fun editedQuantityIsSaved() {
         val viewModel = viewModel()
         viewModel.onIntent(ScanIntent.LoadDemoReceipt)
@@ -239,3 +305,10 @@ class ScanViewModelTest {
         )
     }
 }
+
+private const val SPOILED_AND_FRESH =
+    """{"items":[{"name":"Manzanas podridas","category":"FRUIT_VEG","quantity":3,"unit":"unit",""" +
+        """"estimatedDaysUntilExpiration":0,"confidence":0.9,"isSpoiled":true,""" +
+        """"spoilageReason":"Moho","ecoDisposalTip":"Compost"},""" +
+        """{"name":"Leche","category":"DAIRY","quantity":1,"unit":"l",""" +
+        """"estimatedDaysUntilExpiration":7,"confidence":0.9,"isSpoiled":false}]}"""

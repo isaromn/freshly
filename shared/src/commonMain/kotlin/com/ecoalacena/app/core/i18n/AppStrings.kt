@@ -36,6 +36,12 @@ interface AppStrings {
     val shoppingShareTitle: String
     val copiedToClipboard: String
     val shareError: String
+    val spoiledTitle: String
+    fun ecoAlternative(tip: String): String
+    val spoiledDefaultTip: String
+    val registerAsCompost: String
+    val discard: String
+    fun compostedMessage(name: String): String
     fun caloriesPer(calories: Int, basis: NutritionBasis): String
     val nutritionTitle: String
     fun perServing(servings: Int?): String

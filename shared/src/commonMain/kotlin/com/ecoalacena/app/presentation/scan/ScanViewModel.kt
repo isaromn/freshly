@@ -50,6 +50,7 @@ class ScanViewModel(
             is ScanIntent.RemoveDraft -> removeDraft(intent.id)
             is ScanIntent.AdjustExpiration -> adjustExpiration(intent.id, intent.deltaDays)
             is ScanIntent.RenameDraft -> renameDraft(intent.id, intent.name)
+            is ScanIntent.CompostSpoiled -> compostSpoiled(intent.id)
             is ScanIntent.UpdateQuantity -> updateQuantity(intent.id, intent.quantity)
             is ScanIntent.SetExpiration -> setExpiration(intent.id, intent.expirationDate)
             ScanIntent.Confirm -> confirm()
@@ -156,15 +157,38 @@ class ScanViewModel(
         }
     }
 
+    /**
+     * Wasted food is recorded in the pantry history (so the shopping list can suggest it again) but
+     * never added to the pantry, and it never counts as food saved.
+     */
+    private fun compostSpoiled(id: String) {
+        val current = _state.value
+        val draft = current.spoiledDrafts.firstOrNull { it.id == id } ?: return
+        if (current.status != ScanStatus.REVIEW) return
+
+        viewModelScope.launch {
+            try {
+                repository.discard(draft, nowMillis())
+                _state.update { state -> state.copy(drafts = state.drafts.filterNot { it.id == id }) }
+                sendEffect(ScanEffect.ShowMessage(strings().compostedMessage(draft.name)))
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (error: Exception) {
+                sendEffect(ScanEffect.ShowMessage(strings().saveItemsError))
+            }
+        }
+    }
+
     private fun confirm() {
         val current = _state.value
-        if (current.status != ScanStatus.REVIEW || current.drafts.isEmpty()) return
+        val fresh = current.freshDrafts
+        if (current.status != ScanStatus.REVIEW || fresh.isEmpty()) return
 
         _state.update { it.copy(status = ScanStatus.SAVING) }
 
         viewModelScope.launch {
             try {
-                current.drafts.forEach { draft -> repository.upsert(draft) }
+                fresh.forEach { draft -> repository.upsert(draft) }
                 _state.value = ScanState()
                 sendEffect(ScanEffect.NavigateBack)
             } catch (cancellation: CancellationException) {

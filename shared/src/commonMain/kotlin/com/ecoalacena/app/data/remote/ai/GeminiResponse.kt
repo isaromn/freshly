@@ -25,6 +25,12 @@ data class GeminiAnalysisResult(
     val proteinGrams: Double? = null,
     val carbsGrams: Double? = null,
     val fatGrams: Double? = null,
+    /** `true` when the photo shows the food rotten, mouldy or otherwise unfit to eat. */
+    val isSpoiled: Boolean = false,
+    /** What is wrong with it ("Mould on the skin"), in the app language; only when spoiled. */
+    val spoilageReason: String? = null,
+    /** A circular-economy use for it ("Good for compost"), in the app language; only when spoiled. */
+    val ecoDisposalTip: String? = null,
 )
 
 /**

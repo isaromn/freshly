@@ -25,7 +25,15 @@ data class ScanState(
     /** Products suggested by Gemini, not yet saved to the pantry. */
     val drafts: List<PantryItem> = emptyList(),
     val errorMessage: String? = null,
-)
+) {
+    /** Products that can go to the pantry. */
+    val freshDrafts: List<PantryItem>
+        get() = drafts.filterNot { it.isSpoiled }
+
+    /** Products the scanner saw rotten: they are composted or discarded, never stored as food. */
+    val spoiledDrafts: List<PantryItem>
+        get() = drafts.filter { it.isSpoiled }
+}
 
 sealed interface ScanIntent {
     data class ImageSelected(val image: ScanImage) : ScanIntent
@@ -49,7 +57,11 @@ sealed interface ScanIntent {
 
     /** Sets the exact expiration date picked in the calendar (never earlier than now). */
     data class SetExpiration(val id: String, val expirationDate: Long) : ScanIntent
+    /** Saves the fresh products to the pantry; spoiled ones are never saved. */
     data object Confirm : ScanIntent
+
+    /** Records a spoiled product as wasted food (it goes to compost) and takes it off the list. */
+    data class CompostSpoiled(val id: String) : ScanIntent
 
     /** Demo mode: loads a preloaded receipt, with no network or API key needed. */
     data object LoadDemoReceipt : ScanIntent

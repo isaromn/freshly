@@ -78,9 +78,14 @@ class AnalyzeFoodUseCase(
         if (cleanName.isEmpty()) return null
 
         val itemCategory = resolveCategory(cleanName)
-        val expirationDate = estimatedDaysUntilExpiration
-            ?.let { days -> now + days.coerceIn(0, MAX_SHELF_LIFE_DAYS) * MILLIS_PER_DAY }
-            ?: estimateExpiration(cleanName, itemCategory, now)
+        // Spoiled food is already past its date, whatever the model estimated.
+        val expirationDate = if (isSpoiled) {
+            now
+        } else {
+            estimatedDaysUntilExpiration
+                ?.let { days -> now + days.coerceIn(0, MAX_SHELF_LIFE_DAYS) * MILLIS_PER_DAY }
+                ?: estimateExpiration(cleanName, itemCategory, now)
+        }
         val measure = normalizeMeasure(quantity, unit)
 
         return PantryItem(
@@ -95,6 +100,9 @@ class AnalyzeFoodUseCase(
             proteinGrams = proteinGrams.asGrams(),
             carbsGrams = carbsGrams.asGrams(),
             fatGrams = fatGrams.asGrams(),
+            isSpoiled = isSpoiled,
+            spoilageReason = spoilageReason?.trim()?.takeIf { isSpoiled && it.isNotEmpty() },
+            ecoDisposalTip = ecoDisposalTip?.trim()?.takeIf { isSpoiled && it.isNotEmpty() },
         )
     }
 

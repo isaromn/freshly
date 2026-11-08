@@ -31,6 +31,12 @@ object SpanishStrings : AppStrings {
     override val shoppingShareTitle = "🛒 *Freshly - Lista de compras:*"
     override val copiedToClipboard = "¡Lista copiada al portapapeles!"
     override val shareError = "No se pudo compartir la lista."
+    override val spoiledTitle = "⚠️ Alimento no apto para consumo"
+    override fun ecoAlternative(tip: String) = "🌿 Alternativa ecológica: $tip"
+    override val spoiledDefaultTip = "Llévalo al compost o a la caneca de residuos orgánicos."
+    override val registerAsCompost = "Registrar como desperdiciado (compost)"
+    override val discard = "Descartar"
+    override fun compostedMessage(name: String) = "\"$name\" registrado como desperdicio. ¡Gracias por compostarlo!"
     override fun caloriesPer(calories: Int, basis: NutritionBasis) =
         "$calories kcal / " + when (basis) {
             NutritionBasis.PER_100_G -> "100 g"

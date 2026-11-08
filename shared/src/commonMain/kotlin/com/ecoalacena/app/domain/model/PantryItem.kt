@@ -83,6 +83,15 @@ data class PantryItem(
     val carbsGrams: Float? = null,
     /** Grams of fat per [nutritionBasis]. */
     val fatGrams: Float? = null,
+    /**
+     * `true` when the scanner saw it rotten or mouldy. Such items are never stored as pantry food:
+     * the user composts or discards them. The two texts below come from the scanner too.
+     */
+    val isSpoiled: Boolean = false,
+    /** What is wrong with a spoiled item, e.g. "Mould on the skin". */
+    val spoilageReason: String? = null,
+    /** A circular-economy use for a spoiled item, e.g. "Good for compost". */
+    val ecoDisposalTip: String? = null,
 ) {
 
     /** What the nutrition fields refer to: 100 g / 100 ml, or one piece or pack. */

@@ -418,7 +418,8 @@ private fun ReviewContent(
     val strings = LocalAppStrings.current
     val now = remember { currentEpochMillis() }
     val isSaving = state.status == ScanStatus.SAVING
-    val count = state.drafts.size
+    // Only fresh products go to the pantry; spoiled ones are handled on their own cards.
+    val count = state.freshDrafts.size
 
     Column(modifier = modifier.fillMaxSize()) {
         LazyColumn(
@@ -429,7 +430,7 @@ private fun ReviewContent(
             item(key = "header") {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = strings.foundProducts(count),
+                        text = strings.foundProducts(state.drafts.size),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                     )
@@ -441,7 +442,16 @@ private fun ReviewContent(
                 }
             }
 
-            items(state.drafts, key = { it.id }) { draft ->
+            items(state.spoiledDrafts, key = { it.id }) { draft ->
+                SpoiledItemCard(
+                    item = draft,
+                    enabled = !isSaving,
+                    onCompost = { onIntent(ScanIntent.CompostSpoiled(draft.id)) },
+                    onDiscard = { onIntent(ScanIntent.RemoveDraft(draft.id)) },
+                )
+            }
+
+            items(state.freshDrafts, key = { it.id }) { draft ->
                 DraftItemCard(
                     draft = draft,
                     now = now,

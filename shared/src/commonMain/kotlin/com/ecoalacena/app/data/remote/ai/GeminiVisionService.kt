@@ -153,6 +153,16 @@ class GeminiVisionService(
           wrinkled food lasts 1 to 2 days. Unripe fruit (green banana, hard avocado or mango) lasts
           longer than typical. Food that is clearly spoiled (mould, rot) gets 0 days.
           For receipts you cannot see the food: use the typical values.
+        - SPOILAGE (photos only): set "isSpoiled" to true only when the food is clearly unfit to
+          eat: visible mould, rot, slime, advanced browning or oxidation, a bad smell is implied
+          by leaking or swollen packaging. Ripe or bruised food that can still be eaten is NOT
+          spoiled. For receipts, or when unsure, use false.
+          When "isSpoiled" is true, also fill, in ${outputLanguage.aiName}:
+          * "spoilageReason": what you see, in a few words ("Mould on the skin", "Advanced oxidation").
+          * "ecoDisposalTip": one short, safe circular-economy use, such as home compost, a
+            vermicompost bin or organic waste collection. Never suggest eating it, feeding it to
+            people, or cooking with it. Meat, fish and dairy go to organic waste, not home compost.
+          When "isSpoiled" is false, set both to null.
         - confidence: a number from 0 to 1 for how sure you are of the name and category of this
           item. Use 0.9 or more when the product or label is clearly readable, about 0.6 when you
           infer it from shape and color, and below 0.4 when it is a guess (blurry, partly hidden,
@@ -247,6 +257,15 @@ class GeminiVisionService(
                             putJsonObject("proteinGrams") { put("type", "NUMBER") }
                             putJsonObject("carbsGrams") { put("type", "NUMBER") }
                             putJsonObject("fatGrams") { put("type", "NUMBER") }
+                            putJsonObject("isSpoiled") { put("type", "BOOLEAN") }
+                            putJsonObject("spoilageReason") {
+                                put("type", "STRING")
+                                put("nullable", true)
+                            }
+                            putJsonObject("ecoDisposalTip") {
+                                put("type", "STRING")
+                                put("nullable", true)
+                            }
                         }
                         putJsonArray("required") {
                             add("name")
@@ -260,6 +279,7 @@ class GeminiVisionService(
                             add("proteinGrams")
                             add("carbsGrams")
                             add("fatGrams")
+                            add("isSpoiled")
                         }
                         putJsonArray("propertyOrdering") {
                             add("name")
@@ -273,6 +293,9 @@ class GeminiVisionService(
                             add("proteinGrams")
                             add("carbsGrams")
                             add("fatGrams")
+                            add("isSpoiled")
+                            add("spoilageReason")
+                            add("ecoDisposalTip")
                         }
                     }
                 }

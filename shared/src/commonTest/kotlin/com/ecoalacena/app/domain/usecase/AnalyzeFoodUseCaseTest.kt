@@ -199,6 +199,31 @@ class AnalyzeFoodUseCaseTest {
     }
 
     @Test
+    fun keepsWhatTheModelSaysAboutSpoiledFood() = runTest {
+        val useCase = useCaseReturning(
+            geminiBody(
+                """{"items":[{"name":"Fresas","category":"FRUIT_VEG","quantity":250,"unit":"g",""" +
+                    """"estimatedDaysUntilExpiration":3,"confidence":0.9,"isSpoiled":true,""" +
+                    """"spoilageReason":"Moho blanco","ecoDisposalTip":"Ideal para compost"},""" +
+                    """{"name":"Leche","category":"DAIRY","quantity":1,"unit":"l","estimatedDaysUntilExpiration":7,""" +
+                    """"confidence":0.9,"isSpoiled":false,"spoilageReason":"nada","ecoDisposalTip":"nada"}]}""",
+            ),
+        )
+
+        val (strawberries, milk) = useCase(imageBytes).getOrThrow()
+
+        assertTrue(strawberries.isSpoiled)
+        assertEquals("Moho blanco", strawberries.spoilageReason)
+        assertEquals("Ideal para compost", strawberries.ecoDisposalTip)
+        // Spoiled food is already past its date, whatever the model estimated.
+        assertEquals(NOW, strawberries.expirationDate)
+        // The texts only make sense for spoiled food.
+        assertEquals(false, milk.isSpoiled)
+        assertEquals(null, milk.spoilageReason)
+        assertEquals(null, milk.ecoDisposalTip)
+    }
+
+    @Test
     fun dropsNutritionThatIsNotBelievable() = runTest {
         val useCase = useCaseReturning(
             geminiBody(
@@ -300,7 +325,10 @@ class AnalyzeFoodUseCaseTest {
             properties.getValue("unit").jsonObject.getValue("enum").jsonArray.map { it.jsonPrimitive.content },
         )
         val required = item.getValue("required").jsonArray.map { it.jsonPrimitive.content }
-        assertTrue(listOf("confidence", "caloriesPerUnit", "proteinGrams", "carbsGrams", "fatGrams").all { it in required })
+        assertTrue(
+            listOf("confidence", "caloriesPerUnit", "proteinGrams", "carbsGrams", "fatGrams", "isSpoiled")
+                .all { it in required },
+        )
     }
 
     private fun useCaseReturning(
