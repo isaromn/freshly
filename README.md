@@ -1,109 +1,154 @@
 # Freshly 🥬
 
-Aplicación **Kotlin Multiplatform + Compose Multiplatform** para reducir el desperdicio de alimentos en casa. Lleva el control de tu alacena, avisa de lo que está por caducar y propone recetas con lo que ya tienes.
+**Freshly** is a **Kotlin Multiplatform + Compose Multiplatform** app that helps households waste less food.
+Scan a grocery receipt or a product photo, keep track of what is in your pantry, see what is about to expire
+and cook it before it goes bad.
 
-Funciona en **Android**, **iOS** y **Desktop (JVM)** compartiendo la lógica y la interfaz.
+It runs on **Android**, **iOS** and **Desktop (JVM)** from a single codebase: the domain logic, data layer,
+ViewModels and the whole UI live in `shared/commonMain`.
 
-## Funcionalidades
+## Features
 
-- **Alacena**: inventario de productos con fecha de caducidad estimada automáticamente según la categoría del alimento.
-- **Escaneo con IA**: fotografía un producto o un recibo del supermercado y Gemini Vision identifica los alimentos para añadirlos a la alacena.
-- **Recetas híbridas**: Gemini genera una receta con los ingredientes más próximos a caducar, siempre acompañada de recetas de un motor local *offline* (sin red, sin clave o sin cuota, la app sigue sugiriendo recetas).
-- **Impacto**: métricas de comida aprovechada y desperdicio evitado.
-- **Notificaciones** de productos próximos a caducar.
-- **Offline-first**: los datos se guardan localmente con SQLDelight.
-- **Bilingüe**: español e inglés según el idioma del dispositivo (incluidos los prompts a Gemini).
+- **Smart scanner**: take a photo of a receipt or a product and Gemini Vision extracts the food items
+  (name, quantity, unit, category, nutrition). Every field can be edited before saving, and the expiry date
+  is recalculated when the category changes.
+- **Receipt checks**: the receipt date is read and the app warns when the receipt is too old, so expiry
+  dates are not based on a purchase from months ago. Spoiled food detected in a photo is flagged with
+  composting advice.
+- **Pantry**: inventory with expiry dates estimated per food category, filters by category, quick
+  "Consumed" / "Discarded" actions and an editable quantity.
+- **Expired food banner**: a compact, expandable banner lists expired items and explains how to dispose of
+  each kind (compost, organic waste, recycling the container).
+- **Hybrid recipes**: Gemini creates recipes that prioritise the ingredients closest to expiring, always
+  combined with an **offline recipe engine** with its own recipe templates, so recipes keep coming without
+  network, API key or quota. Recipes include servings, calories and macros, and photos from Unsplash.
+- **Shopping list**: add products by hand, get suggestions from the food you used up, and share the list.
+- **Impact dashboard**: kilograms of food saved, waste avoided, and money lost to wasted food.
+- **Offline-first**: all data is stored locally with SQLDelight, with schema migrations.
+- **Bilingual**: English and Spanish, following the device language (including the Gemini prompts).
+- **Demo Mode**: try the scanner with a sample receipt, no API key needed.
 
-## Stack
+## Kotlin Multiplatform architecture
 
-| Área | Tecnología |
+| Source set | Lines of Kotlin | What lives there |
+|---|---|---|
+| `commonMain` | ~12,100 | Domain, use cases, repositories, Gemini/Unsplash clients, SQLDelight schema, ViewModels, all Compose screens |
+| `androidMain` | ~80 | Platform `actual`s |
+| `iosMain` | ~115 | Platform `actual`s + `MainViewController` |
+| `jvmMain` | ~95 | Platform `actual`s |
+
+About **97%** of the code is shared. Platform code is limited to a small set of `expect`/`actual` declarations:
+
+| `expect` declaration | Purpose |
 |---|---|
-| Lenguaje | Kotlin 2.4 |
-| UI | Compose Multiplatform + Material 3 |
-| Arquitectura | Clean Architecture (domain / data / presentation) + MVI-style ViewModels |
-| DI | Koin |
-| Base de datos | SQLDelight |
-| Red | Ktor Client + kotlinx.serialization |
-| IA | Google Gemini API |
-| Cámara / galería | FileKit |
+| `DatabaseDriverFactory` | SQLDelight driver (Android, Native, JDBC SQLite) |
+| `ShareService` | Native share sheet for recipes and shopping lists |
+| `rememberCameraLauncher` | Camera access for the scanner |
+| `PlatformBackHandler` | System back navigation |
+| `systemLanguageCode()` | Device language for the UI and AI prompts |
+| `platformModule` | Koin bindings for the platform services |
 
-## Estructura
+### Stack
+
+| Area | Technology |
+|---|---|
+| Language | Kotlin 2.4 |
+| UI | Compose Multiplatform + Material 3 |
+| Architecture | Clean Architecture (domain / data / presentation) + MVI ViewModels (State, Intent, Effect) |
+| Dependency injection | Koin |
+| Database | SQLDelight with `.sqm` migrations |
+| Networking | Ktor Client + kotlinx.serialization |
+| AI | Google Gemini API (structured JSON output with a response schema) |
+| Images | Coil 3, Unsplash API |
+| Camera / gallery | FileKit |
+
+### Project structure
 
 ```
 .
-├── androidApp/   # Punto de entrada Android (Activity, Application)
-├── desktopApp/   # Punto de entrada Desktop (JVM)
-├── iosApp/       # Proyecto Xcode y punto de entrada SwiftUI
-└── shared/       # Código compartido
+├── androidApp/   # Android entry point (Activity, Application)
+├── desktopApp/   # Desktop (JVM) entry point
+├── iosApp/       # Xcode project and SwiftUI entry point
+└── shared/
     └── src/
-        ├── commonMain/   # Lógica y UI comunes
+        ├── commonMain/
         │   ├── kotlin/com/ecoalacena/app/
-        │   │   ├── core/           # Utilidades, fechas, i18n
-        │   │   ├── data/           # Repositorios, base de datos local, Gemini (remote/ai)
-        │   │   ├── di/             # Módulos de Koin
-        │   │   ├── domain/         # Modelos, casos de uso, motor de recetas local
-        │   │   └── presentation/   # Pantallas, ViewModels, tema, navegación
-        │   ├── sqldelight/         # Esquema de la base de datos (PantryDatabase.sq)
-        │   └── composeResources/   # Recursos compartidos
-        ├── androidMain/ iosMain/ jvmMain/   # Implementaciones específicas por plataforma
-        └── commonTest/ jvmTest/ iosTest/ androidHostTest/
+        │   │   ├── core/           # Dates, i18n
+        │   │   ├── data/           # Repositories, local database, Gemini and Unsplash clients, demo data
+        │   │   ├── di/             # Koin modules
+        │   │   ├── domain/         # Models, use cases, offline recipe engine
+        │   │   ├── platform/       # expect declarations for platform services
+        │   │   └── presentation/   # Screens, ViewModels, theme
+        │   ├── sqldelight/         # Database schema and migrations
+        │   └── composeResources/   # Shared images
+        ├── androidMain/ iosMain/ jvmMain/   # Platform implementations
+        └── commonTest/ jvmTest/             # Tests
 ```
 
-## Requisitos
+## Requirements
 
-- JDK 21 (Gradle lo descarga automáticamente vía toolchains si no está instalado)
-- Android Studio (o IntelliJ IDEA) con el plugin de Kotlin Multiplatform
+- JDK 21 (Gradle downloads it through toolchains if it is missing)
+- Android Studio or IntelliJ IDEA with the Kotlin Multiplatform plugin
 - Android SDK (compileSdk 37)
-- Xcode (solo para iOS, en macOS)
-- Una clave de [Gemini API](https://aistudio.google.com/apikey) (opcional: sin ella la app funciona con recetas locales, pero sin escaneo con IA)
+- macOS with Xcode, for iOS only
+- Optional: a [Gemini API key](https://aistudio.google.com/apikey) for AI scanning and AI recipes
+- Optional: an [Unsplash access key](https://unsplash.com/developers) for recipe photos
 
-## Configuración
+Without any key the app still works: the scanner has Demo Mode, recipes come from the offline engine and
+each recipe shows the illustration of its category.
 
-1. Clona el repositorio:
+## Setup
+
+1. Clone the repository:
 
    ```bash
    git clone https://github.com/isaromn/freshly.git
    cd freshly
    ```
 
-2. Crea `local.properties` en la raíz (Android Studio lo genera con `sdk.dir`) y añade tu clave:
+2. Add your keys to `local.properties` in the project root (Android Studio creates it with `sdk.dir`):
 
    ```properties
-   sdk.dir=/ruta/a/Android/sdk
-   GEMINI_API_KEY=tu_clave_aqui
-   # Opcional: fotos de las recetas generadas por IA
-   UNSPLASH_ACCESS_KEY=tu_access_key_de_unsplash
+   sdk.dir=/path/to/Android/sdk
+   GEMINI_API_KEY=your_gemini_key
+   UNSPLASH_ACCESS_KEY=your_unsplash_access_key
    ```
 
-   > ⚠️ `local.properties` está en `.gitignore`. **Nunca subas una clave real al repositorio.**
+   > `local.properties` is git-ignored. Never commit a real key.
 
-   Cómo lee la clave cada plataforma:
+   Where each platform reads the keys from:
 
-   | Plataforma | Origen de `GEMINI_API_KEY` y `UNSPLASH_ACCESS_KEY` |
+   | Platform | Source of `GEMINI_API_KEY` and `UNSPLASH_ACCESS_KEY` |
    |---|---|
-   | Android | `local.properties` o variable de entorno → `BuildConfig` |
-   | Desktop | Variable de entorno, propiedad del sistema o `local.properties` |
-   | iOS | Claves en `iosApp/iosApp/Info.plist` (déjalas vacías en los commits) |
+   | Android | `local.properties` or environment variable → `BuildConfig` |
+   | Desktop | Environment variable, system property or `local.properties` |
+   | iOS | `iosApp/iosApp/Info.plist` (keep them empty in commits) |
 
-   Sin `UNSPLASH_ACCESS_KEY` (se obtiene en [unsplash.com/developers](https://unsplash.com/developers)),
-   cada receta muestra la ilustración local de su categoría.
+## Run
 
-## Ejecutar
+- **Android**: `./gradlew :androidApp:installDebug` with a device or emulator connected, or the *Run* button in the IDE.
+- **Desktop**: `./gradlew :desktopApp:run` (hot reload: `./gradlew :desktopApp:hotRun --auto`).
+- **iOS**: open `iosApp/iosApp.xcodeproj` in Xcode, pick a simulator and run the `iosApp` scheme.
+  The build links the system SQLite library through `iosApp/Configuration/Config.xcconfig`.
 
-- **Android**: `./gradlew :androidApp:assembleDebug` o el botón *Run* del IDE.
-- **Desktop**:
-  - Normal: `./gradlew :desktopApp:run`
-  - Hot reload: `./gradlew :desktopApp:hotRun --auto`
-- **iOS**: abre [`iosApp/`](./iosApp) en Xcode y ejecuta el esquema `iosApp`.
+## Try it in two minutes
+
+1. Open the **Scanner** tab and tap **Load sample receipt (Demo Mode)**. Review or edit the items and add them to the pantry.
+2. On **Pantry**, mark an item as *Consumed* or *Discarded*, or tap its quantity to change it.
+3. Open **Recipes** to get dishes that use the items expiring first. Open one to see steps, servings and nutrition.
+4. Check **Impact** to see the food saved and the money lost to waste.
+5. Add a Gemini key and scan a real receipt or a photo of your fridge.
 
 ## Tests
 
+The tests live in `commonTest` and cover the offline recipe engine, expiry estimation, use cases,
+repositories and ViewModels.
+
 ```bash
-./gradlew :shared:jvmTest                  # Desktop / lógica común
-./gradlew :shared:testAndroidHostTest      # Android (host)
-./gradlew :shared:iosSimulatorArm64Test    # iOS (simulador)
+./gradlew :shared:jvmTest                 # common tests on the JVM
+./gradlew :shared:iosSimulatorArm64Test   # common tests on the iOS simulator
 ```
 
----
+## License
 
-Proyecto creado para el Concurso de Kotlin Multiplatform. Más información sobre [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html).
+Released under the [MIT License](LICENSE).
