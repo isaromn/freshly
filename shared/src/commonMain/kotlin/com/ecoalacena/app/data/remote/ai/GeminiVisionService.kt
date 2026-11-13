@@ -185,9 +185,12 @@ class GeminiVisionService(
           on its unit:
           * unit "kg" or "g": per 100 g.  * unit "l" or "ml": per 100 ml.
           * unit "unit": per piece (one apple, one egg, one yogurt cup).  * unit "pack": per pack.
-          If a nutrition label is legible, use it. Otherwise use typical values from food
-          composition tables (for example USDA), for the product as sold (raw meat, raw rice).
-          Never return negative numbers; water and plain coffee or tea have 0 kcal.
+          ALWAYS describe the product AS SOLD, exactly as it is in the package or on the shelf,
+          never prepared or cooked: instant coffee or ground coffee as powder, tea as dry leaves,
+          dry rice, pasta and beans, flour, raw meat and fish, powdered milk as powder.
+          If a nutrition label is legible, use its "as sold" column. Otherwise use typical values
+          from food composition tables (for example USDA) for the product as sold.
+          Never return negative numbers. Only drinking water and similar unsweetened drinks have 0 kcal.
 
         ENGLISH AND SPANISH TERMS
         - DAIRY: Milk / Leche, Yogurt / Yogur, Cheese / Queso, Butter / Mantequilla,
@@ -221,6 +224,8 @@ class GeminiVisionService(
           "caloriesPerUnit": 61, "proteinGrams": 3.2, "carbsGrams": 4.8, "fatGrams": 3.3}
         - Receipt line "CHKN BRST 2.5 LB": MEAT, quantity 1.13, unit "kg", about 3 days,
           per 100 g: 120 kcal, 22.5 g protein, 0 g carbs, 2.6 g fat.
+        - Receipt line "INSTANT COFFEE 85G": BEVERAGE, quantity 85, unit "g", the powder as sold,
+          per 100 g: 353 kcal, 12.2 g protein, 75.4 g carbs, 0.5 g fat (not the prepared cup).
 
         OUTPUT
         - Respond with a single JSON object that follows the response schema, and nothing else:

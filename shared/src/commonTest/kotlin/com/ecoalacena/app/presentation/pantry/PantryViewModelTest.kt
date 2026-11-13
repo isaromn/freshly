@@ -49,16 +49,36 @@ class PantryViewModelTest {
 
     @Test
     fun editingAnItemKeepsItsNutritionUnlessTheFoodChanges() = runTest {
-        val scanned = PantryItem("milk", "Leche", 1.0, "l", NOW + 5 * MILLIS_PER_DAY, false, Category.DAIRY, caloriesPerUnit = 61)
+        val scanned = PantryItem(
+            "milk", "Leche", 1.0, "l", NOW + 5 * MILLIS_PER_DAY, false, Category.DAIRY,
+            caloriesPerUnit = 61, proteinGrams = 3.2f,
+        )
         val repository = FakePantryRepository(listOf(scanned))
         val viewModel = viewModel(repository)
 
         viewModel.onIntent(PantryIntent.SaveItem(scanned.toInput().copy(quantity = 2.0)))
-        assertEquals(61, repository.observeById("milk").first()?.caloriesPerUnit)
+        assertEquals(3.2f, repository.observeById("milk").first()?.proteinGrams)
 
+        // Another food: the scanned values no longer apply, it gets the typical ones of its category.
         viewModel.onIntent(PantryIntent.SaveItem(scanned.toInput().copy(name = "Jugo de naranja")))
-        assertEquals(null, repository.observeById("milk").first()?.caloriesPerUnit)
+        val edited = repository.observeById("milk").first()
+        assertEquals(120, edited?.caloriesPerUnit) // dairy, per 100 ml
+        assertEquals(7.0f, edited?.proteinGrams)
     }
+
+    @Test
+    fun foodAddedByHandGetsTheTypicalCaloriesOfItsCategory() = runTest {
+        val repository = FakePantryRepository()
+        val viewModel = viewModel(repository)
+
+        viewModel.onIntent(PantryIntent.SaveItem(input("Arroz", category = Category.PANTRY_STAPLE)))
+
+        val rice = repository.observeAll().first().single()
+        // The form sends 1 unit by default: a pantry staple unit weighs 0.5 kg, 340 kcal per 100 g.
+        assertEquals(1_700, rice.caloriesPerUnit)
+        assertEquals(50.0f, rice.proteinGrams)
+    }
+
 
     @Test
     fun classifiesFreshnessAndCountsUrgentItems() {

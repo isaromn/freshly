@@ -17,15 +17,17 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.ecoalacena.app.domain.model.PantryItem
+import com.ecoalacena.app.domain.model.typicalCaloriesPerBasis
 import com.ecoalacena.app.presentation.i18n.LocalAppStrings
 
 /**
  * Small pill with the calories of a pantry item, e.g. "🔥 52 kcal / 100 g" or "🔥 95 kcal / pc".
- * Nothing is drawn when the calories are not known.
+ * Items saved without calories show the typical value of their category. Nothing is drawn when
+ * not even that can be estimated (a unit without a known weight).
  */
 @Composable
 internal fun CaloriesBadge(item: PantryItem, modifier: Modifier = Modifier) {
-    val calories = item.caloriesPerUnit ?: return
+    val calories = item.caloriesPerUnit ?: item.typicalCaloriesPerBasis() ?: return
     val strings = LocalAppStrings.current
     val text = strings.caloriesPer(calories, item.nutritionBasis)
 

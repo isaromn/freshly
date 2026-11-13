@@ -9,6 +9,8 @@ import com.ecoalacena.app.core.i18n.currentStrings
 import com.ecoalacena.app.core.wholeDaysBetween
 import com.ecoalacena.app.domain.model.Category
 import com.ecoalacena.app.domain.model.PantryItem
+import com.ecoalacena.app.domain.model.typicalCaloriesPerBasis
+import com.ecoalacena.app.domain.model.withCalories
 import com.ecoalacena.app.domain.repository.PantryRepository
 import com.ecoalacena.app.domain.usecase.EstimateExpirationDateUseCase
 import com.ecoalacena.app.presentation.util.formatDecimal
@@ -164,18 +166,21 @@ class PantryViewModel(
             isOrganic = input.isOrganic,
             category = input.category,
         )
-        // The form has no nutrition fields: an edit keeps what the scanner estimated, as long as it
-        // is still the same food measured the same way (otherwise those numbers would be wrong).
+        // The form has no nutrition fields. An edit keeps what the scanner estimated, as long as it
+        // is still the same food measured the same way; otherwise (and for food added by hand) the
+        // item gets the typical nutrition of its category, so every item shows its calories.
         val previous = input.id?.let { id -> findItem(id)?.item }
-        val item = if (previous != null && previous.keepsNutritionFor(edited)) {
-            edited.copy(
-                caloriesPerUnit = previous.caloriesPerUnit,
-                proteinGrams = previous.proteinGrams,
-                carbsGrams = previous.carbsGrams,
-                fatGrams = previous.fatGrams,
-            )
-        } else {
-            edited
+        val typicalCalories = edited.typicalCaloriesPerBasis()
+        val item = when {
+            previous != null && previous.caloriesPerUnit != null && previous.keepsNutritionFor(edited) ->
+                edited.copy(
+                    caloriesPerUnit = previous.caloriesPerUnit,
+                    proteinGrams = previous.proteinGrams,
+                    carbsGrams = previous.carbsGrams,
+                    fatGrams = previous.fatGrams,
+                )
+            typicalCalories != null -> edited.withCalories(typicalCalories)
+            else -> edited
         }
 
         launchSafely(error = { saveError }) {
