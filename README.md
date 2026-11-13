@@ -321,7 +321,7 @@ Line coverage measured with [Kover](https://github.com/Kotlin/kotlinx-kover) on 
 | Everything except Compose screens | 86% |
 | Whole shared module, Compose screens included | 43% |
 
-The Compose screens are checked by hand on Android, iOS and Desktop; UI tests are the next step.
+The Compose screens are checked by hand on Android, iOS and Desktop.
 
 ## Troubleshooting
 
