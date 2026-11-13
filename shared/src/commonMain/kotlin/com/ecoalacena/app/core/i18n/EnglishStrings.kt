@@ -59,8 +59,9 @@ object EnglishStrings : AppStrings {
     override fun wastedExpiredMessage(count: Int) =
         if (count == 1) "1 expired item taken out of your pantry." else "$count expired items taken out of your pantry."
     override val moneyWastedTitle = "Money lost to waste"
-    override fun explainMoneyWasted(kg: String, pricePerKg: String) =
-        "$kg kg of food thrown away (expired or spoiled), at an average price of COP $pricePerKg per kg."
+    override fun explainMoneyWasted(kg: String, pricePerKg: String, pricePerKgUsd: String) =
+        "$kg kg of food thrown away (expired or spoiled), at an average price of COP $pricePerKg " +
+            "(≈ US$ $pricePerKgUsd) per kg."
     override val spoiledTitle = "⚠️ Not fit to eat"
     override fun oldReceiptTitle(date: String, ageDays: Int) = "Old receipt: from $date ($ageDays days ago)"
     override fun oldReceiptBody(expiredCount: Int) =

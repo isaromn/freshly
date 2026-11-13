@@ -47,7 +47,7 @@ interface AppStrings {
     fun disposalTip(method: DisposalMethod): String
     fun wastedExpiredMessage(count: Int): String
     val moneyWastedTitle: String
-    fun explainMoneyWasted(kg: String, pricePerKg: String): String
+    fun explainMoneyWasted(kg: String, pricePerKg: String, pricePerKgUsd: String): String
     val spoiledTitle: String
     fun oldReceiptTitle(date: String, ageDays: Int): String
     fun oldReceiptBody(expiredCount: Int): String

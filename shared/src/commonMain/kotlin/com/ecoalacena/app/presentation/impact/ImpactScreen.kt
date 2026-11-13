@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ecoalacena.app.core.i18n.AppLanguage
 import com.ecoalacena.app.core.i18n.AppStrings
+import com.ecoalacena.app.domain.model.ImpactMetrics
 import com.ecoalacena.app.domain.usecase.CalculateImpactUseCase
 import com.ecoalacena.app.presentation.i18n.LocalAppStrings
 import com.ecoalacena.app.presentation.util.formatDecimal
@@ -214,12 +215,11 @@ private fun ImpactContent(
                 )
             }
 
-            // Next to the money saved: what thrown-away food cost, in the same currency.
+            // Next to the money saved: what thrown-away food cost, with the same COP / USD buttons
+            // (both cards share the chosen currency).
             item(key = "money-wasted") {
                 val separator = strings.groupSeparator()
-                val animatedWasted = rememberAnimatedValue(
-                    if (state.currency == ImpactCurrency.COP) metrics.moneyWastedCop else metrics.moneyWastedUsd,
-                )
+                val animatedWasted = rememberAnimatedValue(metrics.moneyWastedIn(state.currency))
                 MetricCard(
                     icon = Icons.Filled.MoneyOff,
                     title = strings.moneyWastedTitle,
@@ -228,9 +228,19 @@ private fun ImpactContent(
                     explanation = strings.explainMoneyWasted(
                         kg = formatDecimal(metrics.wastedKg, 1),
                         pricePerKg = formatGrouped(CalculateImpactUseCase.AVERAGE_PRICE_COP_PER_KG.toLong(), separator),
+                        pricePerKgUsd = formatDecimal(
+                            CalculateImpactUseCase.AVERAGE_PRICE_COP_PER_KG / CalculateImpactUseCase.COP_PER_USD,
+                            2,
+                        ),
                     ),
                     tone = MetricTone.WASTE,
-                )
+                ) {
+                    CurrencySelector(
+                        selected = state.currency,
+                        tone = MetricTone.WASTE,
+                        onSelected = { currency -> onIntent(ImpactIntent.SelectCurrency(currency)) },
+                    )
+                }
             }
 
             item(key = "kg") {
@@ -422,6 +432,9 @@ private fun EmptyImpactHint(modifier: Modifier = Modifier) {
     }
 }
 
+private fun ImpactMetrics.moneyWastedIn(currency: ImpactCurrency): Double =
+    if (currency == ImpactCurrency.COP) moneyWastedCop else moneyWastedUsd
+
 /** "$ 45.000" in pesos, "US$ 14.17" in dollars. */
 private fun moneyText(amount: Double, currency: ImpactCurrency, separator: Char): String =
     when (currency) {
@@ -440,7 +453,6 @@ private fun MoneyCard(
     val strings = LocalAppStrings.current
     val separator = strings.groupSeparator()
     val tone = MetricTone.TERTIARY
-    val toneColors = tone.colors()
 
     val animatedAmount = rememberAnimatedValue(
         if (currency == ImpactCurrency.COP) copAmount else usdAmount,
@@ -459,23 +471,35 @@ private fun MoneyCard(
         tone = tone,
         modifier = modifier,
     ) {
-        Row(
-            modifier = Modifier.padding(top = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            ImpactCurrency.entries.forEach { option ->
-                FilterChip(
-                    selected = option == currency,
-                    onClick = { onCurrencySelected(option) },
-                    label = { Text(option.name) },
-                    // Inverted pair when selected: always readable on the tinted card.
-                    colors = FilterChipDefaults.filterChipColors(
-                        labelColor = toneColors.content,
-                        selectedContainerColor = toneColors.content,
-                        selectedLabelColor = toneColors.container,
-                    ),
-                )
-            }
+        CurrencySelector(selected = currency, tone = tone, onSelected = onCurrencySelected)
+    }
+}
+
+/** The COP / USD buttons of the money cards. */
+@Composable
+private fun CurrencySelector(
+    selected: ImpactCurrency,
+    tone: MetricTone,
+    onSelected: (ImpactCurrency) -> Unit,
+) {
+    val toneColors = tone.colors()
+
+    Row(
+        modifier = Modifier.padding(top = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        ImpactCurrency.entries.forEach { option ->
+            FilterChip(
+                selected = option == selected,
+                onClick = { onSelected(option) },
+                label = { Text(option.name) },
+                // Inverted pair when selected: always readable on the tinted card.
+                colors = FilterChipDefaults.filterChipColors(
+                    labelColor = toneColors.content,
+                    selectedContainerColor = toneColors.content,
+                    selectedLabelColor = toneColors.container,
+                ),
+            )
         }
     }
 }
