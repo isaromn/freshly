@@ -3,21 +3,33 @@ package com.ecoalacena.app
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.toAwtImage
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import com.ecoalacena.app.core.i18n.currentStrings
 import com.ecoalacena.app.data.remote.ai.GeminiConfig
 import com.ecoalacena.app.data.remote.image.UnsplashConfig
 import com.ecoalacena.app.di.initKoin
+import com.ecoalacena.app.platform.DesktopTray
 import com.ecoalacena.app.presentation.App
 import com.ecoalacena.app.presentation.appLogoPainter
+import java.awt.Desktop
 import java.awt.Dimension
+import java.awt.desktop.AppReopenedListener
 import java.io.File
 import java.util.Properties
 
@@ -38,12 +50,49 @@ fun main() {
             position = WindowPosition.Aligned(Alignment.Center),
             size = DpSize(width = 1280.dp, height = 800.dp),
         )
+        val strings = remember { currentStrings() }
+        val logo = appLogoPainter()
+        val density = LocalDensity.current
+        var windowVisible by remember { mutableStateOf(true) }
+        var trayHintShown by remember { mutableStateOf(false) }
+
+        fun quit() {
+            DesktopTray.remove()
+            exitApplication()
+        }
+
+        // Expiration alerts are timers of the running app, so closing the window only hides it:
+        // Freshly stays in the menu bar (tray on Windows/Linux) until the user quits from there.
+        LaunchedEffect(logo) {
+            DesktopTray.install(
+                image = logo.toAwtImage(density, LayoutDirection.Ltr, Size(TRAY_ICON_SIZE, TRAY_ICON_SIZE)),
+                openLabel = strings.trayOpen,
+                quitLabel = strings.trayQuit,
+                onOpen = { windowVisible = true },
+                onQuit = ::quit,
+            )
+            // Clicking the Dock icon on macOS brings the hidden window back.
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.APP_EVENT_REOPENED)) {
+                Desktop.getDesktop().addAppEventListener(AppReopenedListener { windowVisible = true })
+            }
+        }
 
         Window(
-            onCloseRequest = ::exitApplication,
+            onCloseRequest = {
+                if (DesktopTray.isSupported) {
+                    windowVisible = false
+                    if (!trayHintShown) {
+                        trayHintShown = true
+                        DesktopTray.showMessage(strings.trayStillRunningTitle, strings.trayStillRunningBody)
+                    }
+                } else {
+                    quit()
+                }
+            },
+            visible = windowVisible,
             state = windowState,
             title = APP_NAME,
-            icon = appLogoPainter(),
+            icon = logo,
         ) {
             // Stops the user from shrinking the window until the layout stops being usable.
             LaunchedEffect(window) {
@@ -58,6 +107,7 @@ fun main() {
 }
 
 private const val APP_NAME = "Freshly"
+private const val TRAY_ICON_SIZE = 64f
 private const val MIN_WINDOW_WIDTH = 900
 private const val MIN_WINDOW_HEIGHT = 600
 

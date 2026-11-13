@@ -406,6 +406,14 @@ object SpanishStrings : AppStrings {
     override val notificationsDenied =
         "Las notificaciones están bloqueadas. Permítelas para Freshly en los ajustes del sistema."
     override val notificationsDeviceNote =
-        "Las alertas se guardan en este dispositivo. En el computador llegan mientras Freshly está abierto. " +
+        "Las alertas se guardan en este dispositivo. En el computador, al cerrar la ventana Freshly sigue en la " +
+            "barra de menú para que las alertas lleguen; si sales de la app, se detienen hasta que la abras. " +
             "Los avisos del hogar no se sincronizan entre dispositivos: comparte tu lista desde Compras."
+
+    // ---- Desktop menu bar / tray ----
+    override val trayOpen = "Abrir Freshly"
+    override val trayQuit = "Salir de Freshly"
+    override val trayStillRunningTitle = "Freshly sigue activo"
+    override val trayStillRunningBody =
+        "Queda en la barra de menú para que lleguen tus alertas de vencimiento. Puedes salir desde ahí."
 }

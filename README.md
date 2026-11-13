@@ -37,10 +37,10 @@ ViewModels and the whole UI live in `shared/commonMain`.
 
 | Source set | Lines of Kotlin | What lives there |
 |---|---|---|
-| `commonMain` | ~13,100 | Domain, use cases, repositories, Gemini/Unsplash clients, SQLDelight schema, ViewModels, all Compose screens |
+| `commonMain` | ~13,200 | Domain, use cases, repositories, Gemini/Unsplash clients, SQLDelight schema, ViewModels, all Compose screens |
 | `androidMain` | ~290 | Platform `actual`s + notification worker |
 | `iosMain` | ~240 | Platform `actual`s + `MainViewController` |
-| `jvmMain` | ~190 | Platform `actual`s |
+| `jvmMain` | ~250 | Platform `actual`s + menu bar / tray icon |
 
 About **95%** of the code is shared. When an alert arrives and what it says is decided once in
 `commonMain` (`ExpirationAlertPlanner`, `PantryAlerts`); each platform only delivers it. Platform code is limited to a small set of `expect`/`actual` declarations:
@@ -52,7 +52,7 @@ About **95%** of the code is shared. When an alert arrives and what it says is d
 | `rememberCameraLauncher` | Camera access for the scanner |
 | `PlatformBackHandler` | System back navigation |
 | `systemLanguageCode()` | Device language for the UI and AI prompts |
-| `NotificationService` | Local notifications: WorkManager + "Pantry Alerts" channel (Android), `UNUserNotificationCenter` calendar triggers (iOS), system tray (Desktop) |
+| `NotificationService` | Local notifications: WorkManager + "Pantry Alerts" channel (Android), `UNUserNotificationCenter` calendar triggers (iOS), menu bar / tray icon that keeps the app running (Desktop) |
 | `rememberNotificationPermissionRequest` | Notification permission (runtime dialog on Android 13+, system prompt on iOS) |
 | `platformModule` | Koin bindings for the platform services |
 
@@ -154,8 +154,10 @@ each recipe shows the illustration of its category.
 > - **Android**: each alert is a WorkManager job, so it arrives with the app closed and is scheduled
 >   again after the phone restarts.
 > - **iOS**: alerts are calendar notifications kept by the system.
-> - **Desktop**: alerts are system tray messages. A desktop app cannot wake itself up, so they only
->   arrive while Freshly is open; they are planned again every time it starts.
+> - **Desktop**: alerts are messages of Freshly's menu bar (macOS) or tray (Windows/Linux) icon.
+>   Closing the window keeps Freshly running there, so alerts keep arriving; choose **Quit Freshly**
+>   in that icon's menu to stop it. A desktop app cannot wake itself up once it has quit, so alerts
+>   are planned again the next time it starts.
 > - Household updates are not synced between devices.
 
 ## Tests

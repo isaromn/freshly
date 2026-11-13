@@ -277,6 +277,12 @@ interface AppStrings {
     val testAlertSent: String
     val notificationsDenied: String
     val notificationsDeviceNote: String
+
+    // ---- Desktop menu bar / tray ----
+    val trayOpen: String
+    val trayQuit: String
+    val trayStillRunningTitle: String
+    val trayStillRunningBody: String
 }
 
 fun stringsFor(language: AppLanguage): AppStrings =
