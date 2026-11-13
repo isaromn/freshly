@@ -17,6 +17,7 @@ class ImpactViewModel(
 ) : ViewModel() {
 
     private val selectedCurrency = MutableStateFlow(ImpactCurrency.COP)
+    private val wastedCurrency = MutableStateFlow(ImpactCurrency.COP)
 
     val state: StateFlow<ImpactState> = combine(
         repository.observeSavedKg(),
@@ -24,12 +25,14 @@ class ImpactViewModel(
         repository.observeSavedProteinGrams(),
         // Every thrown-away item ever recorded: the money lost is a running total, like the money saved.
         repository.observeEventsSince(0L),
-        selectedCurrency,
-    ) { savedKg, savedCalories, savedProteinGrams, events, currency ->
+        // Each money card has its own COP / USD buttons.
+        combine(selectedCurrency, wastedCurrency, ::Pair),
+    ) { savedKg, savedCalories, savedProteinGrams, events, (currency, wasted) ->
         ImpactState(
             isLoading = false,
             metrics = calculateImpact(savedKg, savedCalories, savedProteinGrams, wastedKg = events.wastedKg()),
             currency = currency,
+            wastedCurrency = wasted,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -40,6 +43,7 @@ class ImpactViewModel(
     fun onIntent(intent: ImpactIntent) {
         when (intent) {
             is ImpactIntent.SelectCurrency -> selectedCurrency.value = intent.currency
+            is ImpactIntent.SelectWastedCurrency -> wastedCurrency.value = intent.currency
         }
     }
 }

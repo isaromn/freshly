@@ -215,16 +215,15 @@ private fun ImpactContent(
                 )
             }
 
-            // Next to the money saved: what thrown-away food cost, with the same COP / USD buttons
-            // (both cards share the chosen currency).
+            // Next to the money saved: what thrown-away food cost, with its own COP / USD buttons.
             item(key = "money-wasted") {
                 val separator = strings.groupSeparator()
-                val animatedWasted = rememberAnimatedValue(metrics.moneyWastedIn(state.currency))
+                val animatedWasted = rememberAnimatedValue(metrics.moneyWastedIn(state.wastedCurrency))
                 MetricCard(
                     icon = Icons.Filled.MoneyOff,
                     title = strings.moneyWastedTitle,
-                    value = moneyText(animatedWasted, state.currency, separator),
-                    unit = state.currency.name,
+                    value = moneyText(animatedWasted, state.wastedCurrency, separator),
+                    unit = state.wastedCurrency.name,
                     explanation = strings.explainMoneyWasted(
                         kg = formatDecimal(metrics.wastedKg, 1),
                         pricePerKg = formatGrouped(CalculateImpactUseCase.AVERAGE_PRICE_COP_PER_KG.toLong(), separator),
@@ -236,9 +235,9 @@ private fun ImpactContent(
                     tone = MetricTone.WASTE,
                 ) {
                     CurrencySelector(
-                        selected = state.currency,
+                        selected = state.wastedCurrency,
                         tone = MetricTone.WASTE,
-                        onSelected = { currency -> onIntent(ImpactIntent.SelectCurrency(currency)) },
+                        onSelected = { currency -> onIntent(ImpactIntent.SelectWastedCurrency(currency)) },
                     )
                 }
             }

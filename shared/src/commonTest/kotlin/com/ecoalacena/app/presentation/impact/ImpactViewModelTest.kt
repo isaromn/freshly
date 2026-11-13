@@ -96,6 +96,22 @@ class ImpactViewModelTest {
     }
 
     @Test
+    fun eachMoneyCardKeepsItsOwnCurrency() {
+        val viewModel = ImpactViewModel(repository, CalculateImpactUseCase())
+
+        viewModel.onIntent(ImpactIntent.SelectWastedCurrency(ImpactCurrency.USD))
+
+        assertEquals(ImpactCurrency.USD, viewModel.state.value.wastedCurrency)
+        assertEquals(ImpactCurrency.COP, viewModel.state.value.currency)
+
+        viewModel.onIntent(ImpactIntent.SelectCurrency(ImpactCurrency.USD))
+        viewModel.onIntent(ImpactIntent.SelectWastedCurrency(ImpactCurrency.COP))
+
+        assertEquals(ImpactCurrency.USD, viewModel.state.value.currency)
+        assertEquals(ImpactCurrency.COP, viewModel.state.value.wastedCurrency)
+    }
+
+    @Test
     fun consumingAnItemCountedInUnitsUpdatesEveryImpactMetric() = runTest {
         // 6 dairy units x 0.25 kg = 1.5 kg
         val eggs = testItem("eggs", quantity = 6.0, unit = "unit", expiresInDays = 3, category = Category.DAIRY)
