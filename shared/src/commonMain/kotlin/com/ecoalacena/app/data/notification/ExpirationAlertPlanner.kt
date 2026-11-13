@@ -1,5 +1,6 @@
 package com.ecoalacena.app.data.notification
 
+import com.ecoalacena.app.core.MILLIS_PER_DAY
 import com.ecoalacena.app.core.civilDateOf
 import com.ecoalacena.app.core.i18n.AppStrings
 import com.ecoalacena.app.core.i18n.currentStrings
@@ -28,8 +29,9 @@ data class ExpirationAlert(
  * Decides when the alert of a pantry item arrives and what it says. Shared by every platform, so
  * Android, iOS and desktop alert at the same moment with the same words.
  *
- * Expiration dates are stored as midnight UTC of the expiration day; the alert arrives on that
- * calendar day minus the lead days, at the chosen hour of the user's own time zone.
+ * The alert arrives on the expiration day minus the lead days, at the chosen hour of the user's
+ * own time zone. A date picked by hand is stored as midnight UTC and means that calendar day; an
+ * estimated date is an exact moment, whose day is the one on the user's clock.
  */
 class ExpirationAlertPlanner(
     private val strings: () -> AppStrings = ::currentStrings,
@@ -47,7 +49,11 @@ class ExpirationAlertPlanner(
     ): ExpirationAlert? {
         val expiration = item.expirationDate ?: return null
         val zone = timeZone()
-        val expirationDay = civilDateOf(expiration).let { LocalDate(it.year, it.month, it.day) }
+        val expirationDay = if (expiration.mod(MILLIS_PER_DAY) == 0L) {
+            civilDateOf(expiration).let { LocalDate(it.year, it.month, it.day) }
+        } else {
+            Instant.fromEpochMilliseconds(expiration).toLocalDateTime(zone).date
+        }
         val today = Instant.fromEpochMilliseconds(nowMillis).toLocalDateTime(zone).date
         if (expirationDay < today) return null
 

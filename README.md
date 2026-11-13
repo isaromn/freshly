@@ -149,8 +149,14 @@ each recipe shows the illustration of its category.
    Food added from the sample receipt that expires within the chosen lead time is announced a few seconds later.
 6. Add a Gemini key and scan a real receipt or a photo of your fridge.
 
-> Notifications are local to each device. On Android they survive app restarts and reboots (WorkManager);
-> on Desktop they arrive while Freshly is open; household updates are not synced between devices.
+> Notifications are local to each device and need the user's permission, asked on first launch
+> (Android 13+ and iOS).
+> - **Android**: each alert is a WorkManager job, so it arrives with the app closed and is scheduled
+>   again after the phone restarts.
+> - **iOS**: alerts are calendar notifications kept by the system.
+> - **Desktop**: alerts are system tray messages. A desktop app cannot wake itself up, so they only
+>   arrive while Freshly is open; they are planned again every time it starts.
+> - Household updates are not synced between devices.
 
 ## Tests
 
