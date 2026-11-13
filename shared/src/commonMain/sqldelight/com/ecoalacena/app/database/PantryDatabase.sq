@@ -67,12 +67,14 @@ selectTotalSavedKg:
 SELECT COALESCE(SUM(kg), 0.0)
 FROM savedFoodEntity;
 
+-- Rows saved before every item got a nutrition estimate have NULL calories and protein: they count
+-- with the typical values of the OTHER category (150 kcal and 5 g of protein per 100 g).
 selectTotalSavedCalories:
-SELECT COALESCE(SUM(calories), 0.0)
+SELECT COALESCE(SUM(COALESCE(calories, kg * 1500.0)), 0.0)
 FROM savedFoodEntity;
 
 selectTotalSavedProtein:
-SELECT COALESCE(SUM(proteinGrams), 0.0)
+SELECT COALESCE(SUM(COALESCE(proteinGrams, kg * 50.0)), 0.0)
 FROM savedFoodEntity;
 
 -- What happened to items that left the pantry (kind = 'CONSUMED' or 'DISCARDED'), so the shopping

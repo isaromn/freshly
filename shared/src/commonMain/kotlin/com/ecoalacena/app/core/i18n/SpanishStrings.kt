@@ -97,11 +97,13 @@ object SpanishStrings : AppStrings {
     override val explainMeals = "Estimado de platos de comida completos aprovechados a tiempo (1 kg de comida ≈ 2,5 porciones)."
     override val proteinSavedTitle = "Proteína aprovechada"
     override val proteinUnit = "g de proteína"
-    override val explainProtein = "Gramos de proteína en alimentos consumidos antes de su caducidad."
+    override val explainProtein = "Gramos de proteína en alimentos consumidos antes de su caducidad. Los " +
+        "escaneados usan sus propios valores; el resto, valores típicos de su categoría. La comida vencida no cuenta."
     override val nutritionSummaryHint = "Energía de la comida que consumiste antes de que se venciera"
     override fun caloriesDaysEquivalent(days: String) = "Unos $days días de energía para un adulto (2.000 kcal al día)"
     override val nutritionSummaryEmpty =
-        "Escanea tus productos para estimar sus calorías. Los que añades a mano no las tienen."
+        "Consume los alimentos antes de que venzan para sumar aquí sus calorías. Los escaneados usan sus " +
+            "propios valores; el resto, valores típicos de su categoría. La comida vencida no cuenta."
 
     // ---- Common ----
     override val back = "Volver"

@@ -142,6 +142,40 @@ class PantryRepositoryImplTest {
         assertEquals(95, repository.observeById("apples").first()?.caloriesPerUnit)
     }
 
+    @Test
+    fun foodWithoutNutritionCountsWithTheTypicalValuesOfItsCategory() = runTest {
+        // Typed by hand: no calories. 2 kg of rice (pantry staple: 340 kcal and 10 g of protein per 100 g).
+        repository.upsert(rice)
+
+        repository.markConsumed(rice, NOW)
+
+        assertEquals(6_800.0, repository.observeSavedCalories().first(), 0.01)
+        assertEquals(200.0, repository.observeSavedProteinGrams().first(), 0.01)
+    }
+
+    @Test
+    fun expiredFoodAddsNoCalories() = runTest {
+        val oldMilk = rice.copy(id = "milk", expirationDate = NOW - MILLIS_PER_DAY, caloriesPerUnit = 60)
+        repository.upsert(oldMilk)
+
+        repository.markConsumed(oldMilk, NOW)
+
+        assertEquals(0.0, repository.observeSavedCalories().first())
+    }
+
+    @Test
+    fun foodSavedBeforeTheEstimatesStillCounts() = runTest {
+        val database = PantryDatabase(
+            JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY).also { PantryDatabase.Schema.create(it) },
+        )
+        // A row from an older version: 0.5 kg with no calories or protein recorded.
+        database.pantryDatabaseQueries.insertSavedFood(0.5, NOW, null, null)
+        val repository = PantryRepositoryImpl(database, Dispatchers.Unconfined)
+
+        assertEquals(750.0, repository.observeSavedCalories().first(), 0.01)
+        assertEquals(25.0, repository.observeSavedProteinGrams().first(), 0.01)
+    }
+
     private companion object {
         const val NOW = 1_700_000_000_000L
     }

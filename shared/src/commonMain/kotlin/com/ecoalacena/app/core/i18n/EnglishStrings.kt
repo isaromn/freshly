@@ -99,11 +99,13 @@ object EnglishStrings : AppStrings {
     override val explainMeals = "Estimate of full plates of food used in time (1 kg of food ≈ 2.5 servings)."
     override val proteinSavedTitle = "Protein used"
     override val proteinUnit = "g of protein"
-    override val explainProtein = "Grams of protein in food eaten before it expired."
+    override val explainProtein = "Grams of protein in food eaten before it expired. Scanned items use their " +
+        "own values; the rest, typical values of their category. Expired food does not count."
     override val nutritionSummaryHint = "Energy of the food you ate before it expired"
     override fun caloriesDaysEquivalent(days: String) = "About $days days of energy for an adult (2,000 kcal a day)"
     override val nutritionSummaryEmpty =
-        "Scan your products so we can estimate their calories. Items you type by hand have none."
+        "Eat food before it expires to count its calories here. Scanned items use their own values; " +
+            "the rest, typical values of their category. Expired food does not count."
 
     // ---- Common ----
     override val back = "Back"

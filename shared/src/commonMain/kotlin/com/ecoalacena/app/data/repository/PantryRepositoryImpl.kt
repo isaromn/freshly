@@ -11,6 +11,8 @@ import com.ecoalacena.app.domain.model.Category
 import com.ecoalacena.app.domain.model.PantryEvent
 import com.ecoalacena.app.domain.model.PantryEventKind
 import com.ecoalacena.app.domain.model.PantryItem
+import com.ecoalacena.app.domain.model.estimatedTotalCalories
+import com.ecoalacena.app.domain.model.estimatedTotalProteinGrams
 import com.ecoalacena.app.domain.repository.PantryRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -132,11 +134,12 @@ class PantryRepositoryImpl(
                 val weightKg = eatenPart.estimatedWeightKg()
                 val wasExpired = item.expirationDate?.let { it < consumedAtMillis } ?: false
                 if (weightKg != null && weightKg > 0.0 && !wasExpired) {
+                    // Items without nutrition of their own count with the typical values of their category.
                     queries.insertSavedFood(
                         weightKg,
                         consumedAtMillis,
-                        eatenPart.totalCalories(),
-                        eatenPart.totalProteinGrams(),
+                        eatenPart.estimatedTotalCalories(),
+                        eatenPart.estimatedTotalProteinGrams(),
                     )
                     weightKg
                 } else {
