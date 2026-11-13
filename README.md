@@ -31,7 +31,6 @@ less food. About **95% of the code is shared**, including the whole UI.
 - [Tech stack](#tech-stack)
 - [Getting started](#getting-started)
 - [Tests](#tests)
-- [Troubleshooting](#troubleshooting)
 - [Limitations](#limitations)
 - [License](#license)
 
@@ -322,16 +321,6 @@ Line coverage measured with [Kover](https://github.com/Kotlin/kotlinx-kover) on 
 | Whole shared module, Compose screens included | 43% |
 
 The Compose screens are checked by hand on Android, iOS and Desktop.
-
-## Troubleshooting
-
-| Problem | What to do |
-|---|---|
-| "The Gemini API key is not configured" | Add `GEMINI_API_KEY` as shown in [Setup](#setup), or use **Demo Mode** on the Scanner screen. |
-| Recipes have illustrations instead of photos | There is no `UNSPLASH_ACCESS_KEY`, or the free limit of 50 searches per hour was reached. Recipes still work. |
-| No notifications on Android 13+ | Allow notifications for Freshly in the system settings, then use **Send a test alert** in Settings. |
-| Desktop alerts stopped | Freshly was quit from the menu bar icon. Open it again: the alerts are planned again on start. |
-| iOS build fails with `sqlite3` symbols | Make sure the target uses `iosApp/Configuration/Config.xcconfig`, which adds `-lsqlite3`. |
 
 ## Limitations
 
