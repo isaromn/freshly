@@ -29,6 +29,22 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "Freshly"
             packageVersion = "1.0.0"
+            description = "Scan your groceries, eat them before they expire, and see what you save."
+
+            // The packaged app ships a trimmed Java runtime: SQLite needs java.sql, and the other
+            // modules are the ones `./gradlew :desktopApp:suggestRuntimeModules` reports.
+            modules("java.instrument", "java.management", "java.sql", "jdk.security.auth", "jdk.unsupported")
+
+            macOS {
+                bundleID = "com.ecoalacena.app.desktop"
+                iconFile.set(project.file("icons/freshly.icns"))
+            }
+            windows {
+                iconFile.set(project.file("icons/freshly.ico"))
+            }
+            linux {
+                iconFile.set(project.file("icons/freshly.png"))
+            }
         }
     }
 }
